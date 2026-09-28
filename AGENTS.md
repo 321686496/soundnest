@@ -1,7 +1,7 @@
 # AGENT.md — 声栖（白噪音混音助眠应用）
 
 > 项目根目录智能体指令文件
-> 最后更新：2026-09-18
+> 最后更新：2026-09-28
 
 ---
 
@@ -261,6 +261,7 @@ snapp/lib/
 | Flutter 全功能实现（spec） | `docs/superpowers/specs/2026-09-17-flutter-app-features-design.md` | Flutter 工程全功能实现设计 |
 | Flutter 全功能实现（plan） | `docs/superpowers/plans/2026-09-17-flutter-app-features.md` | T1-T9 逐任务实施计划 |
 | 代码维基 | `docs/code-wiki/whitenoise-code-wiki.md` | 代码结构 / 约定速查 |
+| 白噪音素材调研 | `docs/audio-resources-research.md` | 公开可商用音频来源 / 授权 / 落地建议 |
 | 项目规则 | `.trae/rules/project_rules.md` | TRAE IDE 行为规则 |
 
 > **维护要求**：新增 / 重命名 / 删除文档时，同步更新本表（本文件）。
