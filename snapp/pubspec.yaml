@@ -32,6 +32,9 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   provider: ^6.1.1
+  # 声明式路由（Flutter 官方）。纯 Dart 包无平台通道，OHOS 直接可用
+  # （适配清单仅收录原生插件）。锁 6.5.2：7.x+ 要求 Dart 3，工程 SDK 2.19。
+  go_router: 6.5.2
   # Harmony 适配的 shared_preferences fork：官方 pub 包没有 ohos 原生实现，
   # 会抛 MissingPluginException。改用 OpenHarmony fork，由
   # shared_preferences_ohos 提供 ohos 原生实现，构建 HAP 时自动注入注册表。

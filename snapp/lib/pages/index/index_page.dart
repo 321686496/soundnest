@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Banner;
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/shell_tabs.dart';
@@ -59,11 +60,7 @@ class _IndexPageState extends State<IndexPage> {
   }
 
   void _openDetail(Scene scene) {
-    Navigator.pushNamed(
-      context,
-      '/scene-detail',
-      arguments: <String, dynamic>{'sceneId': scene.id},
-    );
+    context.push('/scene-detail/${scene.id}');
   }
 
   void _onBannerTap(Banner b, PlayerService player) {
@@ -71,10 +68,9 @@ class _IndexPageState extends State<IndexPage> {
       player.applyScene(findScene(b.sceneId!));
     } else if (b.kind == BannerKind.navigate && b.route != null) {
       if (b.route == '/scene-detail' && b.sceneId != null) {
-        Navigator.pushNamed(context, b.route!,
-            arguments: <String, dynamic>{'sceneId': b.sceneId!});
+        context.push('/scene-detail/${b.sceneId}');
       } else {
-        Navigator.pushNamed(context, b.route!);
+        context.push(b.route!);
       }
     }
   }

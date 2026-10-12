@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/scene_models.dart';
@@ -33,9 +34,9 @@ class _SceneDetailPageState extends State<SceneDetailPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map && args['sceneId'] is String && _sceneId.isEmpty) {
-      _sceneId = args['sceneId'] as String;
+    // 路径参数：/scene-detail/:sceneId。
+    if (_sceneId.isEmpty) {
+      _sceneId = GoRouterState.of(context).params['sceneId'] ?? '';
     }
   }
 
@@ -236,11 +237,7 @@ class _SceneDetailPageState extends State<SceneDetailPage> {
   }
 
   void _editScene() {
-    Navigator.pushNamed(
-      context,
-      '/scene-edit',
-      arguments: <String, dynamic>{'sceneId': _sceneId},
-    );
+    context.push('/scene-edit/$_sceneId');
   }
 
   void _openTimerSheet() {

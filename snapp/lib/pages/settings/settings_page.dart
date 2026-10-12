@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/app_storage.dart';
@@ -296,7 +297,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           label: '当前主题',
                           value: currentThemeLabel,
                           valueIsTheme: true,
-                          onTap: () => Navigator.pushNamed(context, '/theme'),
+                          onTap: () => context.push('/theme'),
                         ),
                         const AppDivider(),
                         _ValueRow(

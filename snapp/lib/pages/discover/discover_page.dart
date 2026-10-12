@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/scene_models.dart';
@@ -97,11 +98,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       }).toList();
 
   void _goDetail(String sceneId) {
-    Navigator.pushNamed(
-      context,
-      '/scene-detail',
-      arguments: <String, dynamic>{'sceneId': sceneId},
-    );
+    context.push('/scene-detail/$sceneId');
   }
 
   void _playScene(String sceneId) {
@@ -142,8 +139,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                     const _CardHead(icon: 'mountain', title: '精选场景'),
                     const Spacer(),
                     PressableScale(
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/scene-all'),
+                      onTap: () => context.push('/scene-all'),
                       child: Container(
                         constraints: const BoxConstraints(minHeight: 44),
                         padding: const EdgeInsets.symmetric(
@@ -252,12 +248,12 @@ class _DiscoverPageState extends State<DiscoverPage> {
           ),
           _HeaderBtn(
             icon: AppIcon(name: 'palette', size: 22, color: c.primary),
-            onTap: () => Navigator.pushNamed(context, '/theme'),
+            onTap: () => context.push('/theme'),
           ),
           const SizedBox(width: 8),
           _HeaderBtn(
             icon: AppIcon(name: 'wave', size: 22, color: c.primary),
-            onTap: () => Navigator.pushNamed(context, '/library'),
+            onTap: () => context.push('/library'),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../theme/theme_extension.dart';
 import 'app_icon.dart';
@@ -14,11 +15,11 @@ class NavBar extends StatelessWidget {
   const NavBar({required this.title, this.back = true, this.action, super.key});
 
   void _goBack(BuildContext context) {
-    final nav = Navigator.of(context);
-    if (nav.canPop()) {
-      nav.pop();
+    if (context.canPop()) {
+      context.pop();
     } else {
-      nav.pushNamedAndRemoveUntil('/index', (Route<dynamic> r) => false);
+      // 无可回退栈（深链直达等）→ 回到主壳首页。
+      context.go('/');
     }
   }
 

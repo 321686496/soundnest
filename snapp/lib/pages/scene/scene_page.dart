@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/shell_tabs.dart';
@@ -68,11 +69,7 @@ class _ScenePageState extends State<ScenePage> {
   List<Scene> get _featuredScenes => getCategoryScenes(_activeTag, 3);
 
   void _openDetail(String sceneId) {
-    Navigator.pushNamed(
-      context,
-      '/scene-detail',
-      arguments: <String, dynamic>{'sceneId': sceneId},
-    );
+    context.push('/scene-detail/$sceneId');
   }
 
   void _playScene(Scene scene) {
@@ -216,8 +213,7 @@ class _ScenePageState extends State<ScenePage> {
                       const _CardHead(icon: 'mountain', title: '精选场景'),
                       const Spacer(),
                       PressableScale(
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/scene-all'),
+                        onTap: () => context.push('/scene-all'),
                         child: Container(
                           constraints: const BoxConstraints(minHeight: 44),
                           padding:
@@ -382,7 +378,7 @@ class _ScenePageState extends State<ScenePage> {
           const SizedBox(width: 8),
           _HeaderBtn(
             icon: AppIcon(name: 'palette', size: 22, color: c.primary),
-            onTap: () => Navigator.pushNamed(context, '/theme'),
+            onTap: () => context.push('/theme'),
           ),
         ],
       ),
@@ -417,19 +413,11 @@ class _ScenePageState extends State<ScenePage> {
   }
 
   void _createScene() {
-    Navigator.pushNamed(
-      context,
-      '/scene-edit',
-      arguments: <String, dynamic>{'sceneId': 'new'},
-    );
+    context.push('/scene-edit/new');
   }
 
   void _editScene(Scene scene) {
-    Navigator.pushNamed(
-      context,
-      '/scene-edit',
-      arguments: <String, dynamic>{'sceneId': scene.id},
-    );
+    context.push('/scene-edit/${scene.id}');
   }
 }
 

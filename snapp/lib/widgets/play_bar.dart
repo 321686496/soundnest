@@ -1,33 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../pages/player/player_page.dart';
 import '../services/player_service.dart';
 import '../theme/theme_extension.dart';
 import 'app_toast.dart';
 import 'app_card.dart';
 import 'app_icon.dart';
 import 'pressable.dart';
-
-/// 从底部滑入的全屏播放页路由（curved + fade，回到原 tab）。
-Route<void> _playerRoute() => PageRouteBuilder<void>(
-      transitionDuration: const Duration(milliseconds: 320),
-      reverseTransitionDuration: const Duration(milliseconds: 240),
-      pageBuilder: (_, __, ___) => const PlayerPage(),
-      transitionsBuilder: (_, Animation<double> anim, __, Widget child) {
-        final curved =
-            CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
-        return FadeTransition(
-          opacity: Tween<double>(begin: 0.6, end: 1).animate(curved),
-          child: SlideTransition(
-            position:
-                Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
-                    .animate(curved),
-            child: child,
-          ),
-        );
-      },
-    );
 
 /// 底部悬浮主控条（对应原型 `components/PlayBar.vue`）。
 ///
@@ -79,11 +59,8 @@ class _PlayBarInner extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                // 点击封面/标题区 → 从底部滑入打开完整播放页。
-                onTap: () => Navigator.push(
-                  context,
-                  _playerRoute(),
-                ),
+                // 点击封面/标题区 → 从底部滑入打开完整播放页（转场见路由表 /player）。
+                onTap: () => context.push('/player'),
                 child: Row(
                   children: [
                     Container(

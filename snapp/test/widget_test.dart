@@ -1,6 +1,6 @@
 // 声栖 · 应用外壳冒烟测试。
 //
-// 验证 Root（外壳 + 悬浮 TabBar + 命名路由）能在默认主题下正常 pump，且可经
+// 验证 Root（外壳 + 悬浮 TabBar + go_router 路由）能在默认主题下正常 pump，且可经
 // 底部 TabBar 切换 tab 页。
 
 import 'package:flutter/material.dart';
@@ -77,7 +77,7 @@ void main() {
     final colors = appColorsFor('morandi', 'flat', Brightness.light);
     await tester.pumpWidget(MaterialApp(
       theme: buildAppTheme(colors),
-      home: const OnboardingPage(),
+      home: OnboardingPage(onDone: () {}),
     ));
 
     expect(find.text('欢迎来到声栖'), findsOneWidget);

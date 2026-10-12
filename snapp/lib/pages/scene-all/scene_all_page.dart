@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/shell_tabs.dart';
@@ -28,11 +29,9 @@ class _SceneAllPageState extends State<SceneAllPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map && args['category'] is String) {
-      final cat = args['category'] as String;
-      if (cat.isNotEmpty && _activeTag == 'all') _activeTag = cat;
-    }
+    // 查询参数：/scene-all?category=sleep（深链可携带初始分类）。
+    final cat = GoRouterState.of(context).queryParams['category'];
+    if (cat != null && cat.isNotEmpty && _activeTag == 'all') _activeTag = cat;
   }
 
   List<Scene> get _filteredScenes {
@@ -48,11 +47,7 @@ class _SceneAllPageState extends State<SceneAllPage> {
       }).toList();
 
   void _openDetail(Scene scene) {
-    Navigator.pushNamed(
-      context,
-      '/scene-detail',
-      arguments: <String, dynamic>{'sceneId': scene.id},
-    );
+    context.push('/scene-detail/${scene.id}');
   }
 
   void _playScene(Scene scene) {

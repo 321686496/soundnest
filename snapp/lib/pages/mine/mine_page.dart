@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/achievement_service.dart';
@@ -23,7 +24,7 @@ class MinePage extends StatelessWidget {
   const MinePage({super.key});
 
   void _go(BuildContext context, String route) {
-    Navigator.pushNamed(context, route);
+    context.push(route);
   }
 
   /// 今天播放次数（历史页「今天N次」徽章）。

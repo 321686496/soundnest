@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/scene_models.dart';
@@ -45,8 +46,8 @@ class _SceneEditPageState extends State<SceneEditPage> {
     super.didChangeDependencies();
     if (_argsLoaded) return;
     _argsLoaded = true;
-    final args = ModalRoute.of(context)?.settings.arguments;
-    final id = args is Map ? args['sceneId'] as String? : null;
+    // 路径参数：/scene-edit/:sceneId（'new' 表示新建）。
+    final id = GoRouterState.of(context).params['sceneId'];
     if (id != null && id.isNotEmpty && id != 'new') {
       final scene = context.read<CustomSceneService>().findById(id);
       if (scene != null) {

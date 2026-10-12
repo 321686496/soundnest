@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../theme/theme_extension.dart';
 import 'app_icon.dart';
@@ -58,12 +59,12 @@ class BrandBar extends StatelessWidget {
           ),
         ),
         _BrandBtn(
-          onTap: () => Navigator.pushNamed(context, '/theme'),
+          onTap: () => context.push('/theme'),
           child: AppIcon(name: 'palette', size: 20, color: c.text2),
         ),
         const SizedBox(width: 4),
         _BrandBtn(
-          onTap: () => Navigator.pushNamed(context, '/achievement'),
+          onTap: () => context.push('/achievement'),
           child: AppIcon(name: 'award', size: 20, color: c.text2),
         ),
       ],

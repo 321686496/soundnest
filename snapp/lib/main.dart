@@ -15,7 +15,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final notifier = ThemeNotifier(persist: ThemePrefs.write);
   await notifier.loadFrom(ThemePrefs.read);
-  // 首启引导标记：未标记（'true'）时 Root 先挂载引导页，完成后写回。
+  // 首启引导标记：未完成时由路由 redirect 守卫强制停留在 /onboarding，完成后写回。
   final onboarded =
       await AppStorage.getString(AppStorage.keyOnboarded) == 'true';
   // 播放服务单例：main 创建一次并恢复最近播放，Provider 以 .value 注入同一实例，

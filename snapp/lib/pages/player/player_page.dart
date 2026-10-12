@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' show FontFeature;
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/scene_models.dart';
@@ -30,11 +31,11 @@ class PlayerPage extends StatefulWidget {
 
 class _PlayerPageState extends State<PlayerPage> {
   void _goBack(BuildContext context) {
-    final nav = Navigator.of(context);
-    if (nav.canPop()) {
-      nav.pop();
+    if (context.canPop()) {
+      context.pop();
     } else {
-      nav.pushNamedAndRemoveUntil('/index', (Route<dynamic> r) => false);
+      // 无可回退栈 → 回到主壳首页。
+      context.go('/');
     }
   }
 
@@ -106,7 +107,7 @@ class _PlayerPageState extends State<PlayerPage> {
   }
 
   void _goLibrary(BuildContext context) {
-    Navigator.pushNamed(context, '/library');
+    context.push('/library');
   }
 
   Widget _buildCover(BuildContext context, Scene scene) {
