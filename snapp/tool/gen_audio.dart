@@ -2,10 +2,11 @@
 //
 // 用法：`dart run tool/gen_audio.dart`
 //
-// 为 sounds 库中「可用算法合成」的声音生成 44.1kHz / 16bit / mono PCM WAV
+// 为 sounds 库中「纯算法合成类」声音生成 44.1kHz / 16bit / mono PCM WAV
 // （每条约 10s，用于循环播放），输出到 `assets/audio/<soundId>.wav`。
-// 其余真实采录音（鸟鸣/虫鸣/咖啡厅/打字机等）不在此合成，对应音轨走
-// SimulatedAudioEngine（静音模拟），保证三平台可构建、可运行。
+// 自然类声音（雨/风/溪流/海浪/篝火/森林/风扇）及真实采录音已改用 Mixkit
+// 素材（登记见 `docs/audio-assets-license.md`），不在此合成，重跑本脚本
+// 不会覆盖真实录音。
 //
 // 随机种子固定（Random(42)），产物可复现。
 import 'dart:io';
@@ -23,13 +24,6 @@ final Map<String, void Function(Random, void Function(int, double))> _synths = {
   'pink-noise': _pink,
   'brown-noise': _brown,
   'red-noise': _red,
-  'rain': _rain,
-  'wind': _wind,
-  'stream': _stream,
-  'ocean-wave': _oceanWave,
-  'campfire': _campfire,
-  'forest': _forest,
-  'fan': _fan,
   'train': _train,
 };
 
@@ -89,109 +83,6 @@ void _red(Random r, void Function(int, double) emit) {
     final w = r.nextDouble() * 2 - 1;
     last = (last + 0.012 * w) / 1.012;
     emit(i, last * 4.2);
-  }
-}
-
-/// 雨声：中高频噪声底 + 稀疏随机滴答脉冲。
-void _rain(Random r, void Function(int, double) emit) {
-  double last = 0;
-  double drip = 0;
-  int dripUntil = 0;
-  for (int i = 0; i < _totalSamples; i++) {
-    final w = r.nextDouble() * 2 - 1;
-    // 高频通感：相邻样本差分放大
-    final hi = (w - last) * 0.9;
-    last = w;
-    if (i >= dripUntil && r.nextDouble() < 0.0006) {
-      drip = 0.5;
-      dripUntil = i + (120 + r.nextInt(500));
-    }
-    drip *= 0.9995;
-    final v = hi * 0.55 + (r.nextDouble() - 0.5) * 0.25 + drip;
-    emit(i, v);
-  }
-}
-
-/// 风声：白噪经 0.5-2Hz 慢幅调制（呼啸感）。
-void _wind(Random r, void Function(int, double) emit) {
-  double lfo = 0;
-  double lfoSpeed = 0.0008 + r.nextDouble() * 0.0006;
-  for (int i = 0; i < _totalSamples; i++) {
-    final w = r.nextDouble() * 2 - 1;
-    lfo += lfoSpeed + (r.nextDouble() - 0.5) * 0.0003;
-    final mod = 0.55 + 0.45 * sin(lfo);
-    emit(i, w * 0.35 * mod);
-  }
-}
-
-/// 溪流：带波动的沙沙声（差分噪声 + 快 LFO 水花感）。
-void _stream(Random r, void Function(int, double) emit) {
-  double last = 0;
-  double phase = 0;
-  for (int i = 0; i < _totalSamples; i++) {
-    final w = r.nextDouble() * 2 - 1;
-    final hi = (w - last) * 0.85;
-    last = w;
-    phase += 0.02 + (r.nextDouble() - 0.5) * 0.012;
-    final mod = 0.6 + 0.4 * sin(phase);
-    emit(i, hi * 0.6 * mod + (r.nextDouble() - 0.5) * 0.1);
-  }
-}
-
-/// 海浪：约 8s 周期缓慢起伏的粉白噪声（涌起-回落）。
-void _oceanWave(Random r, void Function(int, double) emit) {
-  const int period = _sampleRate * 8;
-  double b0 = 0, b1 = 0, b2 = 0;
-  for (int i = 0; i < _totalSamples; i++) {
-    final w = r.nextDouble() * 2 - 1;
-    b0 = 0.9 * b0 + 0.1 * w; // 轻低通 → 浪涌底噪
-    b1 = 0.98 * b1 + 0.02 * w; // 更重低通 → 包络源
-    b2 = 0.99 * b2 + 0.01 * (r.nextDouble() * 2 - 1);
-    final t = (i % period) / period;
-    final envelope = sin(pi * t) * 0.8 + b2 * 0.4; // 一次正弦 → 涨落
-    emit(i, (b0 * 0.5 + w * 0.3) * envelope.clamp(-1.0, 1.0));
-  }
-}
-
-/// 篝火：低频噪声底 + 稀疏噼啪脉冲。
-void _campfire(Random r, void Function(int, double) emit) {
-  double low = 0;
-  int crackle = 0;
-  double cAmp = 0;
-  for (int i = 0; i < _totalSamples; i++) {
-    final w = r.nextDouble() * 2 - 1;
-    low = 0.996 * low + 0.004 * w;
-    if (i >= crackle && r.nextDouble() < 0.0012) {
-      cAmp = 0.6 + r.nextDouble() * 0.4;
-      crackle = i + (60 + r.nextInt(260));
-    }
-    cAmp *= 0.99;
-    emit(i, low * 1.6 + (r.nextDouble() * 2 - 1) * cAmp * 0.8);
-  }
-}
-
-/// 森林：中高频沙沙（树叶），带缓慢不规律调制。
-void _forest(Random r, void Function(int, double) emit) {
-  double last = 0;
-  double phase = 0;
-  for (int i = 0; i < _totalSamples; i++) {
-    final w = r.nextDouble() * 2 - 1;
-    final hi = (w - last) * 0.8;
-    last = w;
-    phase += 0.004 + (r.nextDouble() - 0.5) * 0.004;
-    final mod = 0.45 + 0.55 * (0.5 + 0.5 * sin(phase));
-    emit(i, hi * 0.5 * mod);
-  }
-}
-
-/// 风扇：60Hz 基频 + 谐波 + 低速幅度抖动。
-void _fan(Random r, void Function(int, double) emit) {
-  double phase = 0;
-  for (int i = 0; i < _totalSamples; i++) {
-    phase += 2 * pi * 60 / _sampleRate;
-    final n = (r.nextDouble() * 2 - 1) * 0.15;
-    final flutter = 0.9 + 0.1 * sin(i * 0.002 + r.nextDouble());
-    emit(i, (sin(phase) * 0.35 + sin(phase * 2) * 0.12 + n) * flutter);
   }
 }
 

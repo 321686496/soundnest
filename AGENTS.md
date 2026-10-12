@@ -1,7 +1,7 @@
 # AGENT.md — 声栖（白噪音混音助眠应用）
 
 > 项目根目录智能体指令文件
-> 最后更新：2026-09-28
+> 最后更新：2026-10-12
 
 ---
 
@@ -145,7 +145,7 @@ prototype/src/
 ```
 snapp/lib/
 ├── main.dart                    # 应用入口
-├── app/                         # 应用根组件、路由配置（app.dart / router.dart / theme.dart）
+├── app/                         # 应用根组件、路由配置（app.dart / router.dart / shell.dart / shell_tabs.dart / theme_prefs.dart）
 ├── pages/                       # 页面（与 uni-app pages/ 对齐）
 ├── widgets/                     # 公共组件（对应 uni-app components/）
 ├── composables/                 # 业务逻辑 Hooks（对应 useXxx.ts）
@@ -184,7 +184,7 @@ snapp/lib/
 
 - **语言**：Dart 强类型，禁用 `dynamic`（与原生交互必要的边界除外）。
 - **状态管理**：统一方案（如 Riverpod / Provider），禁止 Store-to-Store 直接引用。
-- **路由**：使用命名路由 + 路由参数，与 uni-app `pages.json` 路由表一一对应。
+- **路由**：使用 **go_router 6.5.2** 声明式路由（`lib/app/router.dart` 统一 `GoRouter` 配置），页面跳转一律 `context.push/go/pop`，读参数用 `GoRouterState.of(context)` 的 `params` / `queryParams`，**禁止新增 `Navigator.pushNamed` / `ModalRoute` 取参**。路由路径与 uni-app `pages.json` 页面表一一对应；4 个 tab 页不走路由，由 `ShellWidget`（IndexedStack）保活切换（对应 `uni.switchTab` 语义）；首启引导由 `OnboardState` + `redirect` 守卫实现。Dialog / BottomSheet 仍可直接用 `Navigator.pop`（非页面路由）。
 - **主题切换**：6 配色 × 3 UI 风格须 1:1 迁移，通过 `ThemeData` + 自定义 `InheritedWidget` 实现，并遵循第四章规范（跟随主题、禁硬编码、禁混搭）。
 - **资源引用**：所有静态图片、字体通过 `assets/` 引用并在 `pubspec.yaml` 中声明。
 - **平台条件编译**：使用 `Platform.isIOS` / `Platform.isAndroid` / Harmony 等价常量做平台分支，禁止使用未适配 API。
@@ -216,7 +216,9 @@ snapp/lib/
 
 ### 5.7 已知待办
 
-- **Harmony 三平台构建验证**：Flutter 全功能实现（T1-T9）已完成，`flutter analyze` 零错误、`flutter test` 62 项全绿；iOS / Android / HarmonyOS 三平台构建验证需本地 OH SDK，列为后续待办（`flutter build hap`）。just_audio 0.9.37 已通过三方库适配清单校验（OpenHarmony `fluttertpc_just_audio`），音频在 Harmony 端走原生适配。
+- **Harmony 三平台构建验证**：Flutter 全功能实现（T1-T9）已完成，路由已迁移至 go_router 6.5.2，`flutter analyze` 零错误、`flutter test` 73 项全绿；iOS / Android / HarmonyOS 三平台构建验证需本地 OH SDK，列为后续待办（`flutter build hap`）。just_audio 0.9.37 已通过三方库适配清单校验（OpenHarmony `fluttertpc_just_audio`），音频在 Harmony 端走原生适配；go_router 为纯 Dart 包（无平台通道），不依赖 OHOS 原生适配，其 SDK 约束兼容工程 Dart 2.19.6。
+- **go_router 版本锁定**：固定 **6.5.2**（7.x 起要求 Dart 3），API 与新版差异较大（`initialLocation` 而非 `initialRoute`、`state.params` / `state.queryParams` 而非 `pathParameters`），改动前须查阅本地 pub 缓存源码而非在线文档。
+- **音频素材（2026-10-12 更新）**：已落地 20 条 Mixkit 真实采录音（补齐 13 条缺失音 + 升级 7 条伪自然音，Mixkit License 可商用免署名），逐条登记见 `docs/audio-assets-license.md`；`seed_data.dart` 资产集合拆分为 `generatedAudioIds`（纯合成）+ `recordedAudioIds`（真实录音）。缺口：`nightingale`（夜莺）与蓝/紫/灰噪音（按调研保留算法合成路线）仍走静音模拟。
 
 ---
 

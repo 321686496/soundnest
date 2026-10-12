@@ -1,8 +1,8 @@
 // 声栖 · 音频引擎测试。
 //
 // 覆盖：SimulatedAudioEngine 状态记录、PlayerService 与引擎的接线
-// （仅合成资产音轨被加载、播放/音量/静音/移除同步、无资产场景静默播放）、
-// JustAudioEngine 在测试环境（无平台插件）的降级路径。
+// （有资产音轨被加载（含真实录音）、播放/音量/静音/移除同步、
+// 无资产场景静默播放）、JustAudioEngine 在测试环境（无平台插件）的降级路径。
 
 import 'dart:async';
 
@@ -72,8 +72,8 @@ void main() {
       final player = PlayerService(engine: engine);
 
       player.applyScene(_sceneById('rainy-night'));
-      // rainy-night = [drizzle, thunder, campfire]，仅 campfire 有合成资产
-      expect(engine.loaded, <String>{'campfire'});
+      // rainy-night = [drizzle, thunder, campfire]，三者均有资产（真实录音）
+      expect(engine.loaded, <String>{'drizzle', 'thunder', 'campfire'});
       expect(engine.playing, isTrue);
       expect(player.isPlaying, isTrue);
       expect(player.tracks, hasLength(3));
@@ -123,12 +123,23 @@ void main() {
       expect(player.tracks, hasLength(2));
     });
 
-    test('scene with no generated assets still plays silently', () {
+    test('scene with no audio assets still plays silently', () {
       final engine = SimulatedAudioEngine();
       final player = PlayerService(engine: engine);
 
-      player.applyScene(_sceneById('coffee-time'));
-      // coffee-time = [cafe, typewriter]，均无合成资产
+      // 自造场景只含仍无资产的音（夜莺/蓝噪音）→ 全部走模拟引擎静音播放
+      const Scene silentScene = Scene(
+        id: 'test-silent',
+        name: '静默场景',
+        category: 'sleep',
+        desc: '仅含无资产声音的测试场景',
+        iconName: 'bird',
+        gradient: '',
+        image: '',
+        soundIds: <String>['nightingale', 'blue-noise'],
+        isPreset: true,
+      );
+      player.applyScene(silentScene);
       expect(engine.loaded, isEmpty);
       expect(engine.playing, isTrue);
       expect(player.isPlaying, isTrue);

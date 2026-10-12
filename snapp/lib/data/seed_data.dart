@@ -118,16 +118,26 @@ Sound _sound(String id) {
 }
 
 /// 有合成 WAV 资产的声音 id（`assets/audio/<id>.wav`，由 `tool/gen_audio.dart`
-/// 生成）。其余真实采录音（鸟鸣/虫鸣/咖啡厅/打字机等）不在其列。
+/// 生成）：纯算法合成类（各色噪声音 + 列车节拍）。
 const Set<String> generatedAudioIds = <String>{
-  'white-noise', 'pink-noise', 'brown-noise', 'red-noise',
-  'rain', 'wind', 'stream', 'ocean-wave', 'campfire', 'forest',
-  'fan', 'train',
+  'white-noise', 'pink-noise', 'brown-noise', 'red-noise', 'train',
 };
 
-/// 声音 id → WAV 资产路径；无合成资产返回 null（对应音轨走模拟引擎）。
+/// 有真实采录音资产的声音 id（Mixkit License：可商用、免署名；逐条登记见
+/// `docs/audio-assets-license.md`），同样映射到 `assets/audio/<id>.wav`。
+/// 夜莺/蓝/紫/灰噪音暂无资产，仍走 SimulatedAudioEngine 静音模拟。
+const Set<String> recordedAudioIds = <String>{
+  'rain', 'wind', 'stream', 'ocean-wave', 'campfire', 'forest', 'fan',
+  'drizzle', 'thunder', 'tide', 'waterfall', 'birdsong', 'cricket',
+  'mountain-brook', 'cafe', 'typewriter', 'sleeper-train', 'kitchen',
+  'valley-echo', 'radio-noise',
+};
+
+/// 声音 id → WAV 资产路径；无资产返回 null（对应音轨走模拟引擎）。
 String? audioAssetFor(String id) =>
-    generatedAudioIds.contains(id) ? 'assets/audio/$id.wav' : null;
+    generatedAudioIds.contains(id) || recordedAudioIds.contains(id)
+        ? 'assets/audio/$id.wav'
+        : null;
 
 /// 发现页热门精选相关（对应原型 `scenes.ts` 的 parsePlayCount / featuredSceneCategory / getHotScenes）。
 
