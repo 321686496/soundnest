@@ -201,6 +201,7 @@ snapp/lib/
 3. **权限声明**：相机、相册等权限需在 `ohos/entry/src/main/module.json5` 中声明，与 `android/app/src/main/AndroidManifest.xml`、`ios/Runner/Info.plist` 保持一致。
 4. **构建命令**：Harmony 平台构建使用 `flutter build hap`（HAP 包）或 `flutter build app`（APP 包），开发调试使用 `flutter run -d <harmony-device>`。
 5. **ArkTS/ArkUI**：涉及 `ohos/` 内 `.ets`（ArkTS / ArkUI）代码时，以华为官方开发文档（https://developer.huawei.com/consumer/cn/doc/ ）为准，**禁止凭记忆臆造 API**。
+6. **媒体播控（media_controller 插件）**：OHOS 通知栏播放条（AVSession）与桌面音乐卡片（Form Kit 卡片，`EntryFormAbility` + `widget/pages/MusicWidget2x2/2x4`）由本地插件 `plugins/media_controller` 承载：应用级唯一 AVSession + RDB（`shengqi_media.db`）跨进程共享状态，channel `com.snapp.media`；Flutter 侧经 `lib/services/media_bridge.dart` 桥接 `PlayerService`。**EntryAbility 禁止向 AppStorage 覆盖 `'context'` 键**：just_audio_ohos 会据该键为每条音轨各建一个 AVSession（元数据恒「未知」且 dispose 不销毁），与应用级 session 冲突。
 
 ### 5.6 AI Agent Flutter 任务自检
 
@@ -216,9 +217,11 @@ snapp/lib/
 
 ### 5.7 已知待办
 
-- **Harmony 三平台构建验证**：Flutter 全功能实现（T1-T9）已完成，路由已迁移至 go_router 6.5.2，`flutter analyze` 零错误、`flutter test` 73 项全绿；iOS / Android / HarmonyOS 三平台构建验证需本地 OH SDK，列为后续待办（`flutter build hap`）。just_audio 0.9.37 已通过三方库适配清单校验（OpenHarmony `fluttertpc_just_audio`），音频在 Harmony 端走原生适配；go_router 为纯 Dart 包（无平台通道），不依赖 OHOS 原生适配，其 SDK 约束兼容工程 Dart 2.19.6。
+- **Harmony 三平台构建验证**：Flutter 全功能实现（T1-T9）已完成，路由已迁移至 go_router 6.5.2，`flutter analyze` 零错误；OHOS 端 `flutter build hap` 构建验证（见下），iOS / Android 构建验证列为后续待办。just_audio 0.9.37 已通过三方库适配清单校验（OpenHarmony `fluttertpc_just_audio`），音频在 Harmony 端走原生适配；go_router 为纯 Dart 包（无平台通道），不依赖 OHOS 原生适配，其 SDK 约束兼容工程 Dart 2.19.6。
 - **go_router 版本锁定**：固定 **6.5.2**（7.x 起要求 Dart 3），API 与新版差异较大（`initialLocation` 而非 `initialRoute`、`state.params` / `state.queryParams` 而非 `pathParameters`），改动前须查阅本地 pub 缓存源码而非在线文档。
 - **音频素材（2026-10-12 更新）**：已落地 20 条 Mixkit 真实采录音（补齐 13 条缺失音 + 升级 7 条伪自然音，Mixkit License 可商用免署名），逐条登记见 `docs/audio-assets-license.md`；`seed_data.dart` 资产集合拆分为 `generatedAudioIds`（纯合成）+ `recordedAudioIds`（真实录音）。缺口：`nightingale`（夜莺）与蓝/紫/灰噪音（按调研保留算法合成路线）仍走静音模拟。
+- **OHOS 媒体播控（2026-09-19 已实现，待真机验证）**：通知栏播放条（AVSession 应用级唯一会话）与桌面音乐卡片（Form Kit：`EntryFormAbility` + 2x2/2x4 卡片，播控走 `postCardAction call` → `EntryAbility.callee`）已随 HAP 构建落地；需真机验证通知栏元数据/播控按钮、卡片添加与状态刷新、冷启动卡片播控恢复。
+- **integration_test 跨盘约束**：SDK 在 D 盘而项目在 E 盘时，`flutter build hap` 会把 SDK 内 `integration_test/ohos`（D 盘）注入 `ohos/oh-package.json5` overrides，触发 ohpm `00618008 Cross Driver Error`。已 vendor 到仓库根 `vendor/integration_test` 并在 `snapp/pubspec.yaml` `dependency_overrides` 指向同盘 path 解决；**Harmony SDK 升级后须同步更新 vendor 拷贝**。
 
 ---
 
@@ -262,6 +265,7 @@ snapp/lib/
 | 原型 v2 落地 | `docs/superpowers/specs/2026-09-16-prototype-v2-implementation-design.md` | 原型 v2 全量落地实施设计 |
 | Flutter 全功能实现（spec） | `docs/superpowers/specs/2026-09-17-flutter-app-features-design.md` | Flutter 工程全功能实现设计 |
 | Flutter 全功能实现（plan） | `docs/superpowers/plans/2026-09-17-flutter-app-features.md` | T1-T9 逐任务实施计划 |
+| Flutter 全面优化（spec） | `docs/superpowers/specs/2026-09-19-flutter-optimization-design.md` | 五阶段加固（测试/修复/架构/响应式/UI）设计 |
 | 代码维基 | `docs/code-wiki/whitenoise-code-wiki.md` | 代码结构 / 约定速查 |
 | 白噪音素材调研 | `docs/audio-resources-research.md` | 公开可商用音频来源 / 授权 / 落地建议 |
 | 项目规则 | `.trae/rules/project_rules.md` | TRAE IDE 行为规则 |

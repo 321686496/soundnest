@@ -338,9 +338,15 @@ class _ScenePageState extends State<ScenePage> {
                 const SizedBox(height: 3),
                 Row(
                   children: [
-                    Text('今晚想听什么？',
-                        style: TextStyle(
-                            fontSize: 11, letterSpacing: 0.5, color: c.text2)),
+                    Flexible(
+                      child: Text('今晚想听什么？',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 11,
+                              letterSpacing: 0.5,
+                              color: c.text2)),
+                    ),
                     const SizedBox(width: 4),
                     for (final p in simulatedPrefs)
                       Padding(

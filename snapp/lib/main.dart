@@ -7,6 +7,7 @@ import 'services/app_storage.dart';
 import 'services/checkin_service.dart';
 import 'services/custom_scene_service.dart';
 import 'services/favorites_service.dart';
+import 'services/media_bridge.dart';
 import 'services/player_service.dart';
 import 'services/stats_service.dart';
 import 'theme/theme_notifier.dart';
@@ -30,6 +31,10 @@ Future<void> main() async {
   await checkin.load();
   final customScenes = CustomSceneService();
   await customScenes.load();
+  // OHOS 媒体桥：播放状态 → 通知栏播放条（AVSession）+ 桌面音乐卡片；
+  // 反向接收播控命令（play/pause/next/prev）。attach 须在 loadRecent
+  // 完成后（无音轨播控按最近记录恢复场景）；非 OHOS 平台桥为空转。
+  MediaBridge(customScenes: customScenes).attach(player);
   final achievement = AchievementService(
     player: player,
     checkin: checkin,

@@ -15,14 +15,12 @@ class CustomSceneService extends ChangeNotifier {
 
   /// 从本地存储恢复自定义场景列表。
   Future<void> load() async {
-    final list = await AppStorage.readJsonList(AppStorage.keyScenes);
+    final list = await AppStorage.readJsonListOfMaps(AppStorage.keyScenes);
     if (list == null) return;
     scenes
       ..clear()
       ..addAll(list
-          .whereType<Map<dynamic, dynamic>>()
-          .map((Map<dynamic, dynamic> j) =>
-              Scene.fromJson(j.cast<String, dynamic>()))
+          .map((Map<String, dynamic> j) => Scene.fromJson(j))
           .where((Scene s) => s.id.isNotEmpty));
     notifyListeners();
   }

@@ -1,0 +1,17 @@
+.dart_tool/
+.docache/
+.packages
+pubspec.lock
+
+**/build/
+**/oh_modules/
+**/local.properties
+**/.idea
+**/.clangd
+**/.clang-format
+**/.clang-tidy
+**/.test
+**/*.har
+**/BuildProfile.ets
+**/oh-package-lock.json5
+**/src/main/resources/rawfile/flutter_assets/

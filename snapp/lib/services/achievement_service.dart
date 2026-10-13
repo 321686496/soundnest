@@ -109,10 +109,11 @@ class AchievementService extends ChangeNotifier {
 
   /// 从本地存储恢复已解锁成就。
   Future<void> load() async {
-    final list = await AppStorage.readJsonList(AppStorage.keyAchievements);
+    final list =
+        await AppStorage.readJsonListOfMaps(AppStorage.keyAchievements);
     if (list == null) return;
     _datesById.clear();
-    for (final entry in list.whereType<Map<dynamic, dynamic>>()) {
+    for (final Map<String, dynamic> entry in list) {
       final id = entry['id'] as String?;
       final date = entry['date'] as String?;
       if (id != null && id.isNotEmpty && date != null && date.isNotEmpty) {

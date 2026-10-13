@@ -189,13 +189,16 @@ class MinePage extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text('声栖用户',
-                            style: TextStyle(
-                                fontSize: 23,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.25,
-                                height: 1.1,
-                                color: c.text)),
+                        Flexible(
+                          child: Text('声栖用户',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 23,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.25,
+                                  height: 1.1,
+                                  color: c.text)),
+                        ),
                         const SizedBox(width: 7),
                         Container(
                           padding: const EdgeInsets.symmetric(

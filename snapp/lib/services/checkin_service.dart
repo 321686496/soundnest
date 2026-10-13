@@ -34,13 +34,12 @@ class CheckinService extends ChangeNotifier {
 
   /// 从本地存储恢复签到集合。
   Future<void> load() async {
-    final list = await AppStorage.readJsonList(AppStorage.keyCheckin);
+    final list = await AppStorage.readJsonListOfMaps(AppStorage.keyCheckin);
     if (list == null) return;
     dates
       ..clear()
       ..addAll(list
-          .whereType<Map<dynamic, dynamic>>()
-          .map((Map<dynamic, dynamic> j) => (j['date'] as String?) ?? '')
+          .map((Map<String, dynamic> j) => (j['date'] as String?) ?? '')
           .where((String d) => d.isNotEmpty));
     notifyListeners();
   }

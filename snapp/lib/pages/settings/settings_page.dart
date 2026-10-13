@@ -398,12 +398,23 @@ class _SwitchRow extends StatelessWidget {
               ],
             ),
           ),
-          Transform.scale(
-            scale: 0.8,
-            child: Switch(
-              value: value,
-              activeColor: switchColor,
-              onChanged: onChanged,
+          // Switch 用固定小盒子 + FittedBox 包裹，使布局占位与视觉尺寸一致，
+          // 避免 Transform.scale 保留全宽占位导致窄屏横向溢出。
+          // 外层补 Material 祖先：本页路由无 Scaffold/Material，原生 Switch 需要
+          // Material 上承方能正常构建，否则调试/测试会报 "No Material widget found"。
+          SizedBox(
+            width: 52,
+            height: 34,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Material(
+                type: MaterialType.transparency,
+                child: Switch(
+                  value: value,
+                  activeColor: switchColor,
+                  onChanged: onChanged,
+                ),
+              ),
             ),
           ),
         ],
@@ -460,11 +471,16 @@ class _ValueRow extends StatelessWidget {
                 ],
               ),
             ),
-            Text(value,
-                style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: valueIsTheme ? c.primary : c.text2)),
+            Flexible(
+              child: Text(value,
+                  textAlign: TextAlign.end,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: valueIsTheme ? c.primary : c.text2)),
+            ),
             if (showChevron) ...[
               const SizedBox(width: 4),
               AppIcon(name: 'chevron-right', size: 20, color: c.text3),

@@ -1,0 +1,18 @@
+name: media_controller
+description: 声栖 OHOS 媒体控制插件（通知栏播控 AVSession + 桌面音乐卡片）。
+version: 1.0.0
+publish_to: 'none'
+
+environment:
+  sdk: '>=2.19.6 <3.0.0'
+  flutter: '>=3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      ohos:
+        pluginClass: MediaControllerPlugin

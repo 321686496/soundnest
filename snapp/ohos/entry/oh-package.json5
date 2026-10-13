@@ -10,6 +10,8 @@
     "path_provider_ohos": "file:../har/path_provider_ohos.har",
     "just_audio_ohos": "file:../har/just_audio_ohos.har",
     "background_task": "file:../har/background_task.har",
-    "shared_preferences_ohos": "file:../har/shared_preferences_ohos.har"
+    "media_controller": "file:../har/media_controller.har",
+    "shared_preferences_ohos": "file:../har/shared_preferences_ohos.har",
+    "integration_test": "file:../har/integration_test.har"
   }
 }

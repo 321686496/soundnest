@@ -36,6 +36,22 @@
         ]
       }
     ],
+    "extensionAbilities": [
+      {
+        "name": "EntryFormAbility",
+        "srcEntry": "./ets/entryformability/EntryFormAbility.ets",
+        "label": "$string:EntryAbility_label",
+        "description": "$string:EntryFormAbility_desc",
+        "type": "form",
+        "exported": false,
+        "metadata": [
+          {
+            "name": "ohos.extension.form",
+            "resource": "$profile:music_card_config"
+          }
+        ]
+      }
+    ],
     "requestPermissions": [
       {"name" :  "ohos.permission.INTERNET"},
       {

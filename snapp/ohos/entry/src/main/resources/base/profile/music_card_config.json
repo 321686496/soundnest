@@ -1,0 +1,26 @@
+{
+  "forms": [
+    {
+      "name": "music_widget_2x2",
+      "displayName": "$string:music_widget_name",
+      "description": "$string:music_widget_desc",
+      "src": "./ets/widget/pages/MusicWidget2x2.ets",
+      "uiSyntax": "arkts",
+      "isDefault": true,
+      "updateEnabled": false,
+      "supportDimensions": ["2*2"],
+      "defaultDimension": "2*2"
+    },
+    {
+      "name": "music_widget_2x4",
+      "displayName": "$string:music_widget_name",
+      "description": "$string:music_widget_desc",
+      "src": "./ets/widget/pages/MusicWidget2x4.ets",
+      "uiSyntax": "arkts",
+      "isDefault": false,
+      "updateEnabled": false,
+      "supportDimensions": ["2*4"],
+      "defaultDimension": "2*4"
+    }
+  ]
+}

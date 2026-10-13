@@ -1,0 +1,11 @@
+{
+  "name": "media_controller",
+  "version": "1.0.0",
+  "description": "声栖 OHOS 媒体控制插件（AVSession 通知栏播控 + 桌面音乐卡片）",
+  "main": "index.ets",
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@ohos/flutter_ohos": "file:./har/flutter.har"
+  }
+}

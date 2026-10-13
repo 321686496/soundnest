@@ -19,6 +19,8 @@
     "just_audio_ohos": "file:./har/just_audio_ohos.har",
     "@ohos/flutter_module": "file:./entry",
     "background_task": "file:./har/background_task.har",
-    "shared_preferences_ohos": "file:./har/shared_preferences_ohos.har"
+    "integration_test": "file:./har/integration_test.har",
+    "shared_preferences_ohos": "file:./har/shared_preferences_ohos.har",
+    "media_controller": "file:./har/media_controller.har"
   }
 }

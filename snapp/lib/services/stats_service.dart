@@ -128,17 +128,17 @@ class StatsService extends ChangeNotifier {
       totalPlays = (map['totalPlays'] as num?)?.toInt() ?? 0;
       final byScene = map['playCountsByScene'];
       if (byScene is Map) {
-        playCountsByScene.clear();
-        byScene.forEach((dynamic k, dynamic v) {
-          playCountsByScene[k as String] = (v as num).toInt();
-        });
+        playCountsByScene
+          ..clear()
+          ..addAll(byScene.cast<String, num>().map(
+              (String k, num v) => MapEntry(k, v.toInt())));
       }
       final daily = map['dailyPlayCounts'];
       if (daily is Map) {
-        dailyPlayCounts.clear();
-        daily.forEach((dynamic k, dynamic v) {
-          dailyPlayCounts[k as String] = (v as num).toInt();
-        });
+        dailyPlayCounts
+          ..clear()
+          ..addAll(daily.cast<String, num>().map(
+              (String k, num v) => MapEntry(k, v.toInt())));
       }
       final days = map['activeDays'];
       if (days is List) {

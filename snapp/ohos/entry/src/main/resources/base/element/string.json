@@ -15,6 +15,18 @@
     {
       "name": "reason_background",
       "value": "后台播放白噪音以支持助眠混音"
+    },
+    {
+      "name": "EntryFormAbility_desc",
+      "value": "声栖音乐播放卡片"
+    },
+    {
+      "name": "music_widget_name",
+      "value": "声栖播放卡片"
+    },
+    {
+      "name": "music_widget_desc",
+      "value": "白噪音播放控制与场景展示"
     }
   ]
 }

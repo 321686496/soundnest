@@ -118,13 +118,9 @@ class PlayerService extends ChangeNotifier {
 
   /// 应用启动时恢复最近播放记录。
   Future<void> loadRecent() async {
-    final list = await AppStorage.readJsonList(AppStorage.keyRecent);
+    final list = await AppStorage.readJsonListOfMaps(AppStorage.keyRecent);
     if (list == null) return;
-    recent = list
-        .whereType<Map<dynamic, dynamic>>()
-        .map((Map<dynamic, dynamic> j) =>
-            RecentItem.fromJson(j.cast<String, dynamic>()))
-        .toList();
+    recent = list.map((Map<String, dynamic> j) => RecentItem.fromJson(j)).toList();
     notifyListeners();
   }
 

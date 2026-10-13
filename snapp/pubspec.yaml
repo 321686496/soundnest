@@ -51,6 +51,10 @@ dependencies:
   # 退后台持续播放并显示通知栏播放条。
   background_task:
     path: plugins/background_task
+  # OHOS 媒体控制插件：应用级 AVSession（通知栏播放条播控）+
+  # 桌面音乐卡片状态推送，与 Flutter 侧经 MediaBridge 桥接。
+  media_controller:
+    path: plugins/media_controller
   # Harmony 适配的 just_audio fork（br_0.9.37_ohos 对应 0.9.37 基线）。
   # 解析：just_audio_ohos 提供 ohos 原生实现，构建 HAP 时自动注入注册表与 har。
   just_audio:
@@ -67,6 +71,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   fake_async: ^1.3.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -79,6 +85,11 @@ dev_dependencies:
 # just_audio_ohos 依赖的 path_provider / audio_session 走 Harmony fork 源，
 # 与 just_audio fork 里 hosted 的声明冲突，统一 override 到 fork 源解决。
 dependency_overrides:
+  # SDK（D 盘）的 integration_test/ohos 会作为跨盘 file: 源码依赖注入
+  # ohos/oh-package.json5，触发 ohpm 00618008 Cross Driver Error（D/E 跨卷）。
+  # vendor 到仓库内同盘引用解决；版本与当前 Harmony SDK（3.7.12-ohos）一致。
+  integration_test:
+    path: ../vendor/integration_test
   path_provider:
     git:
       url: https://gitcode.com/openharmony-tpc/flutter_packages.git
@@ -86,6 +97,9 @@ dependency_overrides:
   audio_session:
     git:
       url: https://gitcode.com/CPF-Flutter/flutter_audio_session.git
+  # SDK 内置 integration_test 依赖 crypto 3.0.2，而 just_audio_ohos 需 ^3.0.3，
+  # 统一 override 到 3.0.3（patch 级兼容）解决版本求解冲突。
+  crypto: ^3.0.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

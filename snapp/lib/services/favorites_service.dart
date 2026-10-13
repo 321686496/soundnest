@@ -11,11 +11,10 @@ class FavoritesService extends ChangeNotifier {
 
   /// 从本地存储恢复收藏列表。
   Future<void> load() async {
-    final list = await AppStorage.readJsonList(AppStorage.keyFavorites);
+    final list = await AppStorage.readJsonListOfMaps(AppStorage.keyFavorites);
     if (list == null) return;
     ids = list
-        .whereType<Map<dynamic, dynamic>>()
-        .map((Map<dynamic, dynamic> j) => (j['id'] as String?) ?? '')
+        .map((Map<String, dynamic> j) => (j['id'] as String?) ?? '')
         .where((String id) => id.isNotEmpty)
         .toList();
     notifyListeners();

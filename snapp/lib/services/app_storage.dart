@@ -53,6 +53,21 @@ class AppStorage {
     }
   }
 
+  /// 读取 JSON 字符串并反序列化为 `Map<String, dynamic>` 对象列表；
+  /// 非对象元素被过滤。损坏/缺失返回 null。
+  ///
+  /// 供各 service 的 `load()` 使用，避免在每个调用方重复
+  /// `.whereType<Map<dynamic,dynamic>>().map(... cast<String,dynamic> ...)`。
+  static Future<List<Map<String, dynamic>>?> readJsonListOfMaps(
+      String key) async {
+    final list = await readJsonList(key);
+    if (list == null) return null;
+    return list
+        .whereType<Map>()
+        .map((e) => e.cast<String, dynamic>())
+        .toList();
+  }
+
   static Future<void> writeJsonList(String key, List<Map<String, dynamic>> list) async {
     await setString(key, jsonEncode(list));
   }
