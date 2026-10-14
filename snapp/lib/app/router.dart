@@ -43,7 +43,7 @@ class OnboardState extends ChangeNotifier {
 ///
 /// 带参页面改用路径 / 查询参数（可深链、类型安全）：
 /// `/scene-detail/:sceneId`、`/scene-edit/:sceneId`（`new` 表示新建）、
-/// `/scene-all?category=sleep`。
+/// `/scene-all?category=sleep`、`/sound/:soundId`。
 ///
 /// [onOnboardDone]：引导完成回调（Root 传入，负责写 `shengqi-onboarded`
 /// 存储标记并调用 [OnboardState.complete] 放行主壳）。

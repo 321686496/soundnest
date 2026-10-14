@@ -53,8 +53,8 @@ class _SoundDetailPageState extends State<SoundDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: NavBar(title: '声音详情'),
             ),
             _SoundHero(sound: sound),
