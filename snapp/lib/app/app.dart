@@ -34,6 +34,9 @@ class Root extends StatefulWidget {
   final StatsService stats;
   final AchievementService achievement;
   final bool onboarded;
+
+  /// 初始路由覆盖（测试装配用，生产不传走默认 `/`）。
+  final String? initialLocation;
   const Root({
     super.key,
     required this.notifier,
@@ -44,6 +47,7 @@ class Root extends StatefulWidget {
     required this.stats,
     required this.achievement,
     this.onboarded = true,
+    this.initialLocation,
   });
 
   @override
@@ -56,6 +60,7 @@ class _RootState extends State<Root> {
   late final GoRouter _router = buildRouter(
     _onboard,
     onOnboardDone: _finishOnboarding,
+    initialLocation: widget.initialLocation,
   );
 
   /// 引导完成：写存储标记（不可用时静默跳过）并通知路由守卫放行主壳。

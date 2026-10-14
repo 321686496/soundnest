@@ -9,8 +9,9 @@ import 'package:snapp/services/player_service.dart';
 import 'package:snapp/services/stats_service.dart';
 import 'package:snapp/theme/theme_notifier.dart';
 
-/// 组装完整 Root。可注入自定义 [player]（默认 SimulatedAudioEngine）。
-Root appRoot({PlayerService? player, bool onboarded = true}) {
+/// 组装完整 Root。可注入自定义 [player]（默认 SimulatedAudioEngine），
+/// [initialLocation] 覆盖初始路由（如 `/player` 直接落到播放页）。
+Root appRoot({PlayerService? player, bool onboarded = true, String? initialLocation}) {
   final stats = StatsService();
   final p = player ?? PlayerService(stats: stats, engine: SimulatedAudioEngine());
   final checkin = CheckinService();
@@ -30,5 +31,6 @@ Root appRoot({PlayerService? player, bool onboarded = true}) {
       themeNotifier: ThemeNotifier(),
     ),
     onboarded: onboarded,
+    initialLocation: initialLocation,
   );
 }

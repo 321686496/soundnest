@@ -46,8 +46,16 @@ class OnboardState extends ChangeNotifier {
 ///
 /// [onOnboardDone]：引导完成回调（Root 传入，负责写 `shengqi-onboarded`
 /// 存储标记并调用 [OnboardState.complete] 放行主壳）。
-GoRouter buildRouter(OnboardState onboard, {required VoidCallback onOnboardDone}) => GoRouter(
-      initialLocation: onboard.onboarded ? '/' : '/onboarding',
+/// [initialLocation]：初始路由覆盖（测试直接落到指定页面用，生产不传）。
+GoRouter buildRouter(
+  OnboardState onboard, {
+  required VoidCallback onOnboardDone,
+  String? initialLocation,
+}) =>
+    GoRouter(
+      initialLocation: !onboard.onboarded
+          ? '/onboarding'
+          : (initialLocation ?? '/'),
       refreshListenable: onboard,
       debugLogDiagnostics: kDebugMode,
       redirect: (BuildContext context, GoRouterState state) {
