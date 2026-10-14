@@ -80,6 +80,28 @@ class PlayerService extends ChangeNotifier {
   final AudioEngine _engine;
 
   Scene? currentScene;
+
+  /// 展示用场景：无当前场景但有音轨（如单曲试听）时，由首轨声音合成一个
+  /// 仅用于展示的 Scene（不入库、不写最近/统计，id 前缀 sound- 不会命中 findScene）。
+  Scene? get displayScene {
+    final Scene? current = currentScene;
+    if (current != null) return current;
+    if (tracks.isEmpty) return null;
+    final String id = tracks.first.id;
+    final Sound? s = findSound(id);
+    return Scene(
+      id: 'sound-$id',
+      name: s?.name ?? tracks.first.name,
+      category: '',
+      desc: s?.desc ?? '',
+      iconName: tracks.first.iconName,
+      gradient: s?.gradient ?? '',
+      image: '',
+      soundIds: <String>[id],
+      isPreset: false,
+    );
+  }
+
   List<PlayerTrack> tracks = <PlayerTrack>[];
   bool isPlaying = false;
   int timerMinutes = 0;
@@ -103,6 +125,9 @@ class PlayerService extends ChangeNotifier {
 
   /// 历史最高同时加载音轨数（成就「混音大师」数据源）。
   int maxTrackCount = 0;
+
+  /// 混音上限（MixSheet「/6 路」徽标与 6 路成就同源）。
+  static const int maxMixTracks = 6;
 
   /// 是否曾在 22:00-02:00 时段播放（成就「午夜电台」数据源）。
   bool nightPlayRecorded = false;
@@ -160,6 +185,22 @@ class PlayerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 单曲试听：重建为单轨播放；不写最近记录 / 统计（试听不算场景播放），
+  /// currentScene 置 null 退出场景语境（展示层回退见 displayScene）。
+  void playSound(Sound s) {
+    currentScene = null;
+    tracks = <PlayerTrack>[
+      PlayerTrack(id: s.id, name: s.name, iconName: s.iconName, color: s.color),
+    ];
+    if (tracks.length > maxTrackCount) maxTrackCount = tracks.length;
+    isPlaying = true;
+    unawaited(_engine.disposeAll());
+    unawaited(_engine.loadTrack(s.id, audioAssetFor(s.id)));
+    unawaited(_engine.play());
+    unawaited(BackgroundTask.start());
+    notifyListeners();
+  }
+
   /// 播放/暂停；无音轨时返回 false，由调用方 toast 提示。
   bool togglePlay() {
     if (tracks.isEmpty) return false;
@@ -213,6 +254,25 @@ class PlayerService extends ChangeNotifier {
       unawaited(BackgroundTask.stop());
     }
     notifyListeners();
+  }
+
+  /// 追加一轨；已在混音或达 [maxMixTracks] 上限时返回 false，由调用方 toast 提示。
+  bool addTrack(Sound s) {
+    for (final PlayerTrack t in tracks) {
+      if (t.id == s.id) return false;
+    }
+    if (tracks.length >= maxMixTracks) return false;
+    tracks = List<PlayerTrack>.of(tracks)
+      ..add(PlayerTrack(id: s.id, name: s.name, iconName: s.iconName, color: s.color));
+    if (tracks.length > maxTrackCount) maxTrackCount = tracks.length;
+    unawaited(_engine.loadTrack(s.id, audioAssetFor(s.id)));
+    if (!isPlaying) {
+      isPlaying = true;
+      unawaited(_engine.play());
+      unawaited(BackgroundTask.start());
+    }
+    notifyListeners();
+    return true;
   }
 
   /// 定时：重复点击同一时长则取消（启用/取消真实倒计时）。

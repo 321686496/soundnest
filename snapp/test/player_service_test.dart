@@ -1,5 +1,7 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:snapp/data/sound_models.dart';
+import 'package:snapp/data/seed_data.dart';
 import 'package:snapp/services/audio_engine.dart';
 import 'package:snapp/services/player_service.dart';
 import 'package:snapp/services/scene_service.dart';
@@ -200,5 +202,71 @@ void main() {
       expect(engine.volumes[id] ?? 0, closeTo(0.5, 0.001));
       expect(player.isPlaying, isTrue);
     });
+  });
+
+  test('playSound rebuilds single track and clears currentScene', () {
+    final player = buildPlayer();
+    player.applyScene(findScene('deep-sleep'));
+    expect(player.currentScene, isNotNull);
+    player.playSound(player.findSound('rain')!);
+    expect(player.currentScene, isNull);
+    expect(player.tracks.length, 1);
+    expect(player.tracks.first.id, 'rain');
+    expect(player.isPlaying, isTrue);
+  });
+
+  test('playSound does not write recent', () {
+    final player = buildPlayer();
+    player.applyScene(findScene('deep-sleep'));
+    final recentBefore = player.recent.length;
+    player.playSound(player.findSound('rain')!);
+    expect(player.recent.length, recentBefore);
+  });
+
+  test('displayScene falls back to synthesized scene from first track', () {
+    final player = buildPlayer();
+    expect(player.displayScene, isNull);
+    player.playSound(player.findSound('rain')!);
+    final display = player.displayScene;
+    expect(display, isNotNull);
+    expect(display!.id, 'sound-rain');
+    expect(display.name, '雨声');
+    expect(player.currentScene, isNull);
+  });
+
+  test('addTrack appends distinct track and dedups', () {
+    final player = buildPlayer();
+    player.applyScene(findScene('deep-sleep'));
+    final extra = sounds.firstWhere(
+        (Sound s) => !player.tracks.any((PlayerTrack t) => t.id == s.id));
+    final countBefore = player.tracks.length;
+    expect(player.addTrack(extra), isTrue);
+    expect(player.tracks.length, countBefore + 1);
+    expect(player.tracks.last.id, extra.id);
+    expect(player.addTrack(extra), isFalse);
+  });
+
+  test('addTrack enforces maxMixTracks limit of 6', () {
+    final player = buildPlayer();
+    player.playSound(sounds.first);
+    for (final Sound s in sounds.skip(1)) {
+      if (player.tracks.length >= 6) break;
+      player.addTrack(s);
+    }
+    expect(player.tracks.length, 6);
+    final seventh = sounds.firstWhere(
+        (Sound s) => !player.tracks.any((PlayerTrack t) => t.id == s.id));
+    expect(player.addTrack(seventh), isFalse);
+    expect(player.tracks.length, 6);
+  });
+
+  test('addTrack bumps maxTrackCount (achievement dependency)', () {
+    final player = buildPlayer();
+    player.playSound(sounds.first);
+    expect(player.maxTrackCount, 1);
+    final extra = sounds.firstWhere(
+        (Sound s) => !player.tracks.any((PlayerTrack t) => t.id == s.id));
+    player.addTrack(extra);
+    expect(player.maxTrackCount, 2);
   });
 }
