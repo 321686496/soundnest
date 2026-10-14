@@ -71,7 +71,16 @@ class _SceneDetailPageState extends State<SceneDetailPage> {
             ),
             _buildHero(c, scene, isThisPlaying, player),
             _buildSection(c, '场景故事', _StoryCard(scene: scene)),
-            _buildSection(c, '声音配方', _RecipeCard(recipe: recipe, c: c)),
+            _buildSection(
+              c,
+              '声音配方',
+              _RecipeCard(
+                recipe: recipe,
+                soundIds: scene.soundIds,
+                c: c,
+                onOpenSound: (String id) => context.push('/sound/$id'),
+              ),
+            ),
             _buildSection(
               c,
               '预设方案',
@@ -141,14 +150,16 @@ class _SceneDetailPageState extends State<SceneDetailPage> {
     final timerMinutes = context.select<PlayerService, int>(
         (PlayerService p) => p.timerMinutes);
     return Container(
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       decoration: BoxDecoration(
         gradient: g == null
             ? null
             : LinearGradient(begin: g.begin, end: g.end, colors: g.colors),
         color: g == null ? c.primary : null,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: c.shadow3,
       ),
-      padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),
+      padding: const EdgeInsets.fromLTRB(24, 26, 24, 26),
       child: Column(
         children: [
           Container(
@@ -157,6 +168,16 @@ class _SceneDetailPageState extends State<SceneDetailPage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white.withOpacity(0.18),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                    color: Colors.white.withOpacity(0.20),
+                    blurRadius: 26,
+                    spreadRadius: 10),
+                BoxShadow(
+                    color: Colors.white.withOpacity(0.10),
+                    blurRadius: 56,
+                    spreadRadius: 22),
+              ],
             ),
             alignment: Alignment.center,
             child: AppIcon(name: scene.iconName, size: 120, color: c.onCover),
@@ -190,7 +211,13 @@ class _SceneDetailPageState extends State<SceneDetailPage> {
                       end: Alignment.bottomRight,
                       colors: <Color>[c.primary, c.primaryStrong],
                     ),
-                    boxShadow: c.shadow3,
+                    boxShadow: <BoxShadow>[
+                      ...c.shadow3,
+                      BoxShadow(
+                          color: c.primarySoft,
+                          blurRadius: 28,
+                          spreadRadius: 8),
+                    ],
                   ),
                   alignment: Alignment.center,
                   child: AppIcon(
@@ -394,15 +421,30 @@ class _StoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Theme.of(context).appColors;
     return AppCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Text(
-        '"${scene.desc}"',
-        style: TextStyle(
-          fontSize: 14,
-          color: c.text,
-          fontStyle: FontStyle.italic,
-          height: 1.7,
-          letterSpacing: 0.25,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 3,
+              decoration: BoxDecoration(
+                color: c.primarySoft,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text('"${scene.desc}"',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: c.text,
+                    fontStyle: FontStyle.italic,
+                    height: 1.7,
+                    letterSpacing: 0.25,
+                  )),
+            ),
+          ],
         ),
       ),
     );
@@ -411,59 +453,97 @@ class _StoryCard extends StatelessWidget {
 
 class _RecipeCard extends StatelessWidget {
   final List<RecipeItem> recipe;
+  final List<String> soundIds;
   final AppColors c;
-  const _RecipeCard({required this.recipe, required this.c});
+  final void Function(String soundId) onOpenSound;
+
+  const _RecipeCard({
+    required this.recipe,
+    required this.soundIds,
+    required this.c,
+    required this.onOpenSound,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // buildRecipe 按 scene.soundIds 顺序 1:1 构造（scene_service.dart），
+    // recipe[i] ↔ soundIds[i]，联动按下标取 id。
+    final player = context.read<PlayerService>();
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
         children: [
           for (var i = 0; i < recipe.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    AppIcon(
-                        name: recipe[i].icon,
-                        size: 20,
-                        color: c.primary),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(recipe[i].name,
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w500, color: c.text)),
-                    ),
-                    Text('${recipe[i].percent}%',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: c.text2)),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: SizedBox(
-                    height: 6,
-                    width: double.infinity,
-                    child: Stack(
-                      children: [
-                        Container(color: c.sunken),
-                        FractionallySizedBox(
-                          widthFactor: recipe[i].percent / 100,
-                          child: Container(
-                            color: hexToColor(recipe[i].color) ?? c.primary,
-                          ),
+            PressableScale(
+              onTap: () => onOpenSound(soundIds[i]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: c.primarySoft,
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      ],
+                        alignment: Alignment.center,
+                        child: AppIcon(
+                            name: recipe[i].icon, size: 18, color: c.primary),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(recipe[i].name,
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: c.text)),
+                      ),
+                      Text('${recipe[i].percent}%',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: c.text2)),
+                    ],
+                  ),
+                  const SizedBox(height: 7),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: SizedBox(
+                      height: 8,
+                      width: double.infinity,
+                      child: Stack(
+                        children: [
+                          Container(color: c.sunken),
+                          Builder(builder: (BuildContext context) {
+                            final snd = player.findSound(soundIds[i]);
+                            final g =
+                                snd == null ? null : parseCssGradient(snd.gradient);
+                            return FractionallySizedBox(
+                              widthFactor: recipe[i].percent / 100,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: g == null
+                                      ? null
+                                      : LinearGradient(
+                                          begin: g.begin,
+                                          end: g.end,
+                                          colors: g.colors),
+                                  color: g == null
+                                      ? hexToColor(recipe[i].color) ?? c.primary
+                                      : null,
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ],
