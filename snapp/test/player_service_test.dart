@@ -269,4 +269,39 @@ void main() {
     player.addTrack(extra);
     expect(player.maxTrackCount, 2);
   });
+
+  test('displayScene is reference-stable across repeated reads in audition',
+      () {
+    final player = buildPlayer();
+    player.playSound(player.findSound('rain')!);
+    final a = player.displayScene;
+    final b = player.displayScene;
+    expect(a, isNotNull);
+    // 试听态连续读取须返回同一实例（缓存），否则 context.select 每秒 tick
+    // 都判不等导致播放页整页重建。
+    expect(identical(a, b), isTrue);
+  });
+
+  test('displayScene rebuilds new instance when first track changes', () {
+    final player = buildPlayer();
+    player.playSound(player.findSound('rain')!);
+    final a = player.displayScene;
+    player.playSound(player.findSound('ocean-wave')!);
+    final b = player.displayScene;
+    expect(a, isNotNull);
+    expect(b, isNotNull);
+    // 首轨变化 → 旧缓存失效，须返回反映新首轨的新实例。
+    expect(identical(a, b), isFalse);
+    expect(b!.id, 'sound-ocean-wave');
+    expect(b.name, '海浪');
+  });
+
+  test('displayScene passes through currentScene identity when scene applied',
+      () {
+    final player = buildPlayer();
+    final scene = findScene('deep-sleep');
+    player.applyScene(scene);
+    // 有场景时直接透传同一实例，不受缓存逻辑影响。
+    expect(identical(player.displayScene, player.currentScene), isTrue);
+  });
 }

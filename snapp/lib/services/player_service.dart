@@ -81,17 +81,27 @@ class PlayerService extends ChangeNotifier {
 
   Scene? currentScene;
 
+  /// displayScene 试听态合成缓存：键 = 首轨 id，键不变复用同一实例，
+  /// 首轨变化自动失效重建。
+  String? _displaySceneKey;
+  Scene? _displaySceneCache;
+
   /// 展示用场景：无当前场景但有音轨（如单曲试听）时，由首轨声音合成一个
   /// 仅用于展示的 Scene（不入库、不写最近/统计）。id 前缀 sound- 不与任何
   /// 真实场景 id 冲突（已核验）；但 [findScene] 对未知 id 仍非空回退
   /// homeScenes 首条，下游不得经 [findScene] 解析该展示 id。
+  /// 试听态按首轨 id 缓存合成实例（键不变返回同一实例），保证
+  /// context.select 引用稳定；有场景时透传 [currentScene]，不走缓存。
   Scene? get displayScene {
     final Scene? current = currentScene;
     if (current != null) return current;
     if (tracks.isEmpty) return null;
     final String id = tracks.first.id;
+    if (_displaySceneKey == id && _displaySceneCache != null) {
+      return _displaySceneCache;
+    }
     final Sound? s = findSound(id);
-    return Scene(
+    final Scene scene = Scene(
       id: 'sound-$id',
       name: s?.name ?? tracks.first.name,
       category: '',
@@ -102,6 +112,9 @@ class PlayerService extends ChangeNotifier {
       soundIds: <String>[id],
       isPreset: false,
     );
+    _displaySceneKey = id;
+    _displaySceneCache = scene;
+    return scene;
   }
 
   List<PlayerTrack> tracks = <PlayerTrack>[];
