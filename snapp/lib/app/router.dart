@@ -14,6 +14,7 @@ import '../pages/scene-all/scene_all_page.dart';
 import '../pages/scene-detail/scene_detail_page.dart';
 import '../pages/scene-edit/scene_edit_page.dart';
 import '../pages/settings/settings_page.dart';
+import '../pages/sound-detail/sound_detail_page.dart';
 import '../pages/stats/stats_page.dart';
 import '../pages/theme/theme_page.dart';
 import 'shell.dart';
@@ -92,6 +93,10 @@ GoRouter buildRouter(
         GoRoute(
           path: '/scene-edit/:sceneId',
           builder: (_, __) => const SceneEditPage(),
+        ),
+        GoRoute(
+          path: '/sound/:soundId',
+          builder: (_, __) => const SoundDetailPage(),
         ),
         // 完整播放页：从底部滑入 + 淡入（原 PlayBar 的 PageRouteBuilder 转场迁移至此）。
         GoRoute(

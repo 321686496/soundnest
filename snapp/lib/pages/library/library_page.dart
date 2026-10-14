@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../data/sound_models.dart';
 import '../../data/seed_data.dart';
 import '../../theme/theme_extension.dart';
-import '../../utils/style_utils.dart';
 import '../../widgets/app_icon.dart';
 import '../../widgets/app_page.dart';
-import '../../widgets/app_toast.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/nav_bar.dart';
 import '../../widgets/pressable.dart';
@@ -14,7 +13,7 @@ import '../../widgets/segmented.dart';
 import '../../widgets/sound_card.dart';
 
 /// 声音库（对照原型 `pages/library/library.vue`）：
-/// 搜索栏 + 分类分段 + 声音网格 + 声音详情底部弹窗。
+/// 搜索栏 + 分类分段 + 声音网格，点按声音卡跳转声音详情页。
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
 
@@ -48,12 +47,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   void _openDetail(Sound sound) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (BuildContext ctx) => _SoundDetailSheet(sound: sound),
-    );
+    context.push('/sound/${sound.id}');
   }
 
   @override
@@ -238,259 +232,6 @@ class _SearchIcon extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// 元数据行。
-class _MetaRow {
-  final String label;
-  final String value;
-  const _MetaRow(this.label, this.value);
-}
-
-/// 声音详情底部弹窗（Hero + 元数据表 + 适用场景 + 操作）。
-class _SoundDetailSheet extends StatelessWidget {
-  final Sound sound;
-  const _SoundDetailSheet({required this.sound});
-
-  static const List<_MetaRow> _metaBase = <_MetaRow>[
-        _MetaRow('时长', ''),
-        _MetaRow('采样率', ''),
-        _MetaRow('音质', ''),
-        _MetaRow('循环片段', ''),
-        _MetaRow('来源', ''),
-      ];
-
-  List<_MetaRow> get _metaRows {
-    final values = <String>[
-      sound.duration, sound.sampleRate, sound.quality, sound.loopLength, sound.source,
-    ];
-    return List<_MetaRow>.generate(
-        _metaBase.length, (int i) => _MetaRow(_metaBase[i].label, values[i]));
-    }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Theme.of(context).appColors;
-    final g = parseCssGradient(sound.gradient);
-    return SafeArea(
-      top: false,
-      child: Container(
-        constraints:
-            BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
-        decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: c.shadow4,
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(
-                    color: c.sunken,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text('声音详情',
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.15,
-                            color: c.text)),
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Transform.translate(
-                      offset: const Offset(9, 0),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        alignment: Alignment.center,
-                        child: AppIcon(name: 'close', size: 18, color: c.text3),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              // Hero：声音渐变资产作底，浮层文字走 on-cover token
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: g == null
-                      ? null
-                      : LinearGradient(
-                          begin: g.begin, end: g.end, colors: g.colors),
-                  color: g == null ? c.primary : null,
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: Colors.white.withOpacity(0.18),
-                      ),
-                      child: Center(
-                        child: AppIcon(
-                            name: sound.iconName,
-                            size: 64,
-                            color: c.onCover),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(sound.name,
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                            color: c.onCover)),
-                    const SizedBox(height: 2),
-                    Text(sound.type,
-                        style: TextStyle(
-                            fontSize: 11, color: c.onCoverSoft)),
-                    const SizedBox(height: 6),
-                    Text(sound.desc,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 12,
-                            height: 1.6,
-                            color: c.onCoverSoft)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              // 元数据表
-              for (var i = 0; i < _metaRows.length; i++)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-                  decoration: BoxDecoration(
-                    border: i == _metaRows.length - 1
-                        ? null
-                        : Border(
-                            bottom: BorderSide(color: c.line, width: 0.5)),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(_metaRows[i].label,
-                          style:
-                              TextStyle(fontSize: 12, color: c.text2)),
-                      const Spacer(),
-                      Flexible(
-                        child: Text(_metaRows[i].value,
-                            textAlign: TextAlign.right,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: c.text)),
-                      ),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 12),
-              Text('适用场景',
-                  style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w600, color: c.text2)),
-              const SizedBox(height: 7),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: sound.scenes
-                    .map((String tag) => Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 11, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: c.primarySoft,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(tag,
-                              style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: c.primary)),
-                        ))
-                    .toList(),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: PressableScale(
-                      onTap: () =>
-                          showAppToast(context, '正在播放 ${sound.name}'),
-                      child: Container(
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: c.primary,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AppIcon(name: 'play', size: 20, color: c.onPrimary),
-                            const SizedBox(width: 5),
-                            Text('播放',
-                                style: TextStyle(
-                                    fontSize: 14.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: c.onPrimary)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: PressableScale(
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        showAppToast(context, '${sound.name} 已加入混音');
-                      },
-                      child: Container(
-                        height: 42,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                              color: c.primary.withOpacity(0.55)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AppIcon(name: 'mixer', size: 20, color: c.primary),
-                            const SizedBox(width: 5),
-                            Text('加入混音',
-                                style: TextStyle(
-                                    fontSize: 14.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: c.primary)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
