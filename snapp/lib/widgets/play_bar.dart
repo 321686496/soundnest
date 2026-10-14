@@ -45,7 +45,7 @@ class _PlayBarInner extends StatelessWidget {
     final isPlaying = context.select<PlayerService, bool>(
         (PlayerService p) => p.isPlaying);
     final sceneName = context.select<PlayerService, String?>(
-        (PlayerService p) => p.currentScene?.name);
+        (PlayerService p) => p.displayScene?.name);
     final isLocked = context.select<PlayerService, bool>(
         (PlayerService p) => p.isLocked);
     final hasTimer = context.select<PlayerService, bool>(

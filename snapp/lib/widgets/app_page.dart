@@ -23,8 +23,8 @@ class AppPage extends StatefulWidget {
   /// 需要内容通栏（如场景详情 Hero）时传 EdgeInsets.zero 自行控制。
   final EdgeInsetsGeometry? padding;
 
-  /// 滚动内容尾部应预留的让位高度：悬浮 TabBar（未播放）或
-  /// TabBar + PlayBar（播放中）。锚点几何见 shell.dart：
+  /// 滚动内容尾部应预留的让位高度：悬浮 TabBar（无音轨）或
+  /// TabBar + PlayBar（有音轨）。锚点几何见 shell.dart：
   /// TabBar bottom = safeBottom*0.4 + 6，PlayBar bottom = safeBottom + kTabHeight + 8。
   ///
   /// 铁律：只能加在**滚动内容内部**（根级 SingleChildScrollView 的 `padding`），
@@ -32,7 +32,7 @@ class AppPage extends StatefulWidget {
   /// 被硬裁掉，永远进不了悬浮组件下方，悬浮叠层效果即失效。
   static double reservedBottomInset(BuildContext context) {
     final bool showPlayBar = context.select<PlayerService, bool>(
-        (PlayerService p) => p.currentScene != null);
+        (PlayerService p) => p.tracks.isNotEmpty);
     final double safeBottom = MediaQuery.of(context).padding.bottom;
     return showPlayBar
         ? safeBottom + kTabHeight + kPlayBarHeight + 20.0

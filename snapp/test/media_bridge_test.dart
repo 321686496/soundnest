@@ -111,6 +111,26 @@ void main() {
       expect(updates.length, 1);
       expect(updates.single['isPlaying'], isFalse);
     });
+
+    test('playSound 后快照标题回退声音名（displayScene）', () async {
+      final player = PlayerService(engine: SimulatedAudioEngine());
+      MediaBridge().attach(player);
+      await pumpEventQueue();
+      updates.clear();
+
+      player.playSound(player.findSound('rain')!);
+      await pumpEventQueue();
+
+      expect(updates.length, 1);
+      final args = updates.single;
+      expect(args['title'], '雨声');
+      expect(args['artist'], '雨声');
+      expect(args['isPlaying'], isTrue);
+      // 试听无真实场景：场景恢复 id 保持空串（不指向合成场景）。
+      expect(args['sceneId'], '');
+      expect(args['color1'], '#9AABC0');
+      expect(args['color2'], '#667C91');
+    });
   });
 
   group('命令上行（播控路由）', () {

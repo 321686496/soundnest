@@ -46,7 +46,7 @@ class _PlayerPageState extends State<PlayerPage> {
     // 页壳只订阅当前场景引用与定时面板显隐；播放态/音量/每秒倒计时等
     // 由下方各区块独立 select，不整页重建。
     final currentScene = context.select<PlayerService, Scene?>(
-        (PlayerService p) => p.currentScene);
+        (PlayerService p) => p.displayScene);
     final showTimerPanel = context.select<PlayerService, bool>(
         (PlayerService p) => p.showTimerPanel);
 

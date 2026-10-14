@@ -92,7 +92,9 @@ class MediaBridge {
   }
 
   _MediaSnapshot _snapshotOf(PlayerService player) {
-    final scene = player.currentScene;
+    // 展示元数据走 displayScene（试听回退声音名/声音渐变）；
+    // sceneId 仍取真实 currentScene：试听无场景，供卡片恢复时回退。
+    final scene = player.displayScene;
     final hasTracks = player.tracks.isNotEmpty;
     return _MediaSnapshot(
       title: scene?.name ?? '声栖',
@@ -102,7 +104,7 @@ class MediaBridge {
       isPlaying: hasTracks && player.isPlaying,
       color1: _gradientColor(scene?.gradient, 0, _fallbackColor1),
       color2: _gradientColor(scene?.gradient, 1, _fallbackColor2),
-      sceneId: scene?.id ?? '',
+      sceneId: player.currentScene?.id ?? '',
     );
   }
 

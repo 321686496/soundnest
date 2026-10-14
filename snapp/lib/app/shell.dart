@@ -39,7 +39,7 @@ class _ShellWidgetState extends State<ShellWidget> {
     // 只订阅是否需要展示 PlayBar：避免音量拖拽 / 静音 / 睡眠定时逐秒等
     // PlayerService 的高频变更导致整棵 Shell（Stack + TabBar + PlayBar）重建。
     final showPlayBar = context.select<PlayerService, bool>(
-        (PlayerService p) => p.currentScene != null);
+        (PlayerService p) => p.tracks.isNotEmpty);
     final safeBottom = MediaQuery.of(context).padding.bottom;
     return Scaffold(
       body: Stack(
