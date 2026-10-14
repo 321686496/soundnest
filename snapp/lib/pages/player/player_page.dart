@@ -213,6 +213,12 @@ class _PlayerPageState extends State<PlayerPage> {
             icon: AppIcon(
                 name: 'heart', size: 26, color: isFav ? c.primary : c.text2),
             onTap: () {
+              // 试听态（currentScene 为 null）下 scene 是合成展示场景
+              // （id 前缀 sound-，findScene 会非空回退首条），不得写入收藏。
+              if (player.currentScene == null) {
+                showAppToast(context, '试听暂不支持收藏');
+                return;
+              }
               fav.toggle(scene.id);
               showAppToast(context, isFav ? '已取消收藏' : '已收藏');
             },

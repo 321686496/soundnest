@@ -9,9 +9,11 @@
 // 而非 pumpAndSettle，否则 settle 永不结束导致超时。
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 
 import 'package:snapp/pages/player/player_page.dart';
 import 'package:snapp/services/audio_engine.dart';
+import 'package:snapp/services/favorites_service.dart';
 import 'package:snapp/services/player_service.dart';
 import 'package:snapp/services/scene_service.dart';
 import 'package:snapp/widgets/app_icon.dart';
@@ -21,14 +23,23 @@ import 'helpers/test_root.dart';
 void main() {
   /// 预置播放态并经 `/player` 路由直接落到播放页。
   ///
+  /// [audition] 为 true 时走 `playSound` 单曲试听预置（currentScene 置 null，
+  /// 页面展示合成 `sound-*` 场景）；默认 `applyScene(ocean-sleep)`，
+  /// applyScene 即开始播放。
+  ///
   /// 用 initialLocation 走 go_router 正规路由（手动 push 会被初始路由
   /// restore 冲掉）；pump 固定时长越过路由过渡——播放态下均衡器/封面
   /// 呼吸为无限动画，全程不可 pumpAndSettle。
   ///
   /// Shell 四个 tab 保活在树中，find 必须限定 PlayerPage 子树，
   /// 否则会命中 PlayBar/首页卡上的同名图标与文本。
-  Future<void> pumpPlayer(WidgetTester tester, PlayerService player) async {
-    player.applyScene(findScene('ocean-sleep')); // applyScene 即开始播放
+  Future<void> pumpPlayer(WidgetTester tester, PlayerService player,
+      {bool audition = false}) async {
+    if (audition) {
+      player.playSound(player.findSound('rain')!);
+    } else {
+      player.applyScene(findScene('ocean-sleep')); // applyScene 即开始播放
+    }
     await tester.pumpWidget(appRoot(player: player, initialLocation: '/player'));
     await tester.pump();
     // 900ms 越过 300ms 路由转场 + AppPage 入场动效（约 450ms 上浮淡入，
@@ -70,6 +81,49 @@ void main() {
         inPlayer(find.byWidgetPredicate((w) => w is AppIcon && w.name == 'play')),
         findsOneWidget);
     expect(tester.takeException(), isNull);
+
+    // 收尾卸载：取消 _ProgressSection 的 100ms 周期 Timer，避免 pending timer。
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 50));
+  });
+
+  testWidgets('试听态收藏：不写合成 sound-* 脏 id，提示「试听暂不支持收藏」',
+      (WidgetTester tester) async {
+    // 内容高于 600 默认测试面：按仓库惯例放大到 iPhone 尺寸再 pump
+    // （sound_detail_page_test.dart 同款），否则收藏按钮落在视口外点不中。
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final player = PlayerService(engine: SimulatedAudioEngine());
+    await pumpPlayer(tester, player, audition: true);
+
+    // 试听态：currentScene 为 null，页面展示的是合成展示场景（id 前缀 sound-）。
+    expect(player.currentScene, isNull);
+    expect(player.displayScene!.id, 'sound-rain');
+
+    // 收藏服务实例取自 appRoot 注入的 provider。
+    final fav =
+        tester.element(find.byType(PlayerPage)).read<FavoritesService>();
+    expect(fav.ids, isEmpty);
+
+    final heart = inPlayer(
+        find.byWidgetPredicate((w) => w is AppIcon && w.name == 'heart'));
+    expect(heart, findsOneWidget);
+    await tester.ensureVisible(heart);
+    await tester.tap(heart);
+    await tester.pump(); // overlay 下一帧构建 toast
+
+    // 核心断言：合成展示 id 未被写入收藏（修复前会持久化 'sound-rain'）。
+    expect(fav.ids, isEmpty);
+    expect(fav.isFav('sound-rain'), isFalse);
+    expect(find.text('试听暂不支持收藏'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    // 冲掉 toast 定时器链（1800ms 自消失 + 220ms 移除回调），避免残留 Timer
+    // （sound_detail_page_test.dart 同款处理）。
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 220));
+    expect(find.text('试听暂不支持收藏'), findsNothing);
 
     // 收尾卸载：取消 _ProgressSection 的 100ms 周期 Timer，避免 pending timer。
     await tester.pumpWidget(const SizedBox.shrink());
