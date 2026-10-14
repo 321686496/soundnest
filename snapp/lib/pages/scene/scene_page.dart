@@ -66,7 +66,7 @@ class _ScenePageState extends State<ScenePage> {
           .map((RecentItem r) => RecentHit(r.sceneId))
           .toList());
 
-  List<Scene> get _featuredScenes => getCategoryScenes(_activeTag, 3);
+  List<Scene> get _featuredScenes => getCategoryScenes(_activeTag, 4);
 
   void _openDetail(String sceneId) {
     context.push('/scene-detail/$sceneId');
@@ -137,6 +137,9 @@ class _ScenePageState extends State<ScenePage> {
     return AppPage(
       bottomBarSpace: true,
       child: SingleChildScrollView(
+        // 尾部让位加在滚动内容内部：内容从悬浮 TabBar/PlayBar 下方滑过，
+        // 滚到底时最后一条内容完整越过悬浮区（见 AppPage.reservedBottomInset）。
+        padding: EdgeInsets.only(bottom: AppPage.reservedBottomInset(context)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -146,7 +149,6 @@ class _ScenePageState extends State<ScenePage> {
                 _CardHead(icon: 'flame', title: '为你推荐'),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -190,7 +192,6 @@ class _ScenePageState extends State<ScenePage> {
               children: [
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
                   child: Row(
                     children: [
                       for (final tag in sceneCategories)
@@ -349,26 +350,32 @@ class _ScenePageState extends State<ScenePage> {
                     ),
                     const SizedBox(width: 4),
                     for (final p in simulatedPrefs)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 2),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: c.primarySoft,
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AppIcon(name: 'flame', size: 12, color: c.primary),
-                              const SizedBox(width: 2),
-                              Text(_prefLabelMap[p] ?? p,
-                                  style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: c.primary)),
-                            ],
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 2),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: c.primarySoft,
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AppIcon(name: 'flame', size: 12, color: c.primary),
+                                const SizedBox(width: 2),
+                                Flexible(
+                                  child: Text(_prefLabelMap[p] ?? p,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: c.primary)),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -558,9 +565,10 @@ class _RecCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: c.text)),
             Text(scene.desc,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, color: c.text2)),
+                style: TextStyle(
+                    fontSize: 11, height: 1.35, color: c.text2)),
           ],
         ),
       ),
@@ -727,50 +735,55 @@ class _FeaturedGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = <Widget>[];
     for (var i = 0; i < scenes.length; i += 2) {
-      rows.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: SceneCard(
-              name: scenes[i].name,
-              soundCount: scenes[i].soundIds.length,
-              soundIcons: _presetIconList(i),
-              bgColor: scenes[i].gradient,
-              cover: scenes[i].image,
-              isPreset: scenes[i].isPreset,
-              isGrid: true,
-              active: currentSceneId == scenes[i].id,
-              onTap: () => onTap(scenes[i]),
-              onPlay: () => onPlay(scenes[i]),
-            ),
-          ),
-          const SizedBox(width: 8),
-          if (i + 1 < scenes.length)
-            Expanded(
-              child: SceneCard(
-                name: scenes[i + 1].name,
-                soundCount: scenes[i + 1].soundIds.length,
-                soundIcons: _presetIconList(i + 1),
-                bgColor: scenes[i + 1].gradient,
-                cover: scenes[i + 1].image,
-                isPreset: scenes[i + 1].isPreset,
-                isGrid: true,
-                active: currentSceneId == scenes[i + 1].id,
-                onTap: () => onTap(scenes[i + 1]),
-                onPlay: () => onPlay(scenes[i + 1]),
-              ),
-            )
-          else
-            const Expanded(child: SizedBox()),
-        ],
-      ));
+      if (i + 1 == scenes.length) {
+        // 奇数尾卡改横排形态铺满整行，避免 2 列网格右列留白
+        // （数据层各类目仅 2-3 条，尾行孤卡是常态）。
+        rows.add(_buildRowCard(scenes[i]));
+      } else {
+        rows.add(Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildGridCard(scenes[i])),
+            const SizedBox(width: 8),
+            Expanded(child: _buildGridCard(scenes[i + 1])),
+          ],
+        ));
+      }
       rows.add(const SizedBox(height: 8));
     }
     return Column(children: rows);
   }
 
-  List<String> _presetIconList(int index) =>
-      scenes[index].soundIds.map((String id) {
+  Widget _buildGridCard(Scene scene) {
+    return SceneCard(
+      name: scene.name,
+      soundCount: scene.soundIds.length,
+      soundIcons: _iconsOf(scene),
+      bgColor: scene.gradient,
+      cover: scene.image,
+      isPreset: scene.isPreset,
+      isGrid: true,
+      active: currentSceneId == scene.id,
+      onTap: () => onTap(scene),
+      onPlay: () => onPlay(scene),
+    );
+  }
+
+  Widget _buildRowCard(Scene scene) {
+    return SceneCard(
+      name: scene.name,
+      soundCount: scene.soundIds.length,
+      soundIcons: _iconsOf(scene),
+      bgColor: scene.gradient,
+      cover: scene.image,
+      isPreset: scene.isPreset,
+      active: currentSceneId == scene.id,
+      onTap: () => onTap(scene),
+      onPlay: () => onPlay(scene),
+    );
+  }
+
+  List<String> _iconsOf(Scene scene) => scene.soundIds.map((String id) {
         for (final s in sounds) {
           if (s.id == id) return s.iconName;
         }

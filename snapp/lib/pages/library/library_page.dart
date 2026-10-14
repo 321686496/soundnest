@@ -123,15 +123,19 @@ class _LibraryPageState extends State<LibraryPage> {
           const _SearchIcon(),
           const SizedBox(width: 8),
           Expanded(
-            child: TextField(
-              controller: _searchCtrl,
-              onChanged: (String v) => setState(() => _keyword = v),
-              style: TextStyle(fontSize: 13, color: c.text),
-              cursorColor: c.primary,
-              decoration: InputDecoration(
-                hintText: '搜索声音或场景',
-                hintStyle: TextStyle(fontSize: 13, color: c.text3),
-                border: InputBorder.none,
+            // TextField 需要 Material 祖先（同 scene_edit 页，容器无 Scaffold Material）。
+            child: Material(
+              type: MaterialType.transparency,
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: (String v) => setState(() => _keyword = v),
+                style: TextStyle(fontSize: 13, color: c.text),
+                cursorColor: c.primary,
+                decoration: InputDecoration(
+                  hintText: '搜索声音或场景',
+                  hintStyle: TextStyle(fontSize: 13, color: c.text3),
+                  border: InputBorder.none,
+                ),
               ),
             ),
           ),

@@ -108,6 +108,9 @@ class _IndexPageState extends State<IndexPage> {
     return AppPage(
       bottomBarSpace: true,
       child: SingleChildScrollView(
+        // 尾部让位加在滚动内容内部：内容从悬浮 TabBar/PlayBar 下方滑过，
+        // 滚到底时最后一条内容完整越过悬浮区（见 AppPage.reservedBottomInset）。
+        padding: EdgeInsets.only(bottom: AppPage.reservedBottomInset(context)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

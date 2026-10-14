@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:snapp/app/app.dart';
+import 'package:snapp/pages/index/index_page.dart';
 import 'package:snapp/services/achievement_service.dart';
 import 'package:snapp/services/checkin_service.dart';
 import 'package:snapp/services/custom_scene_service.dart';
@@ -63,5 +64,62 @@ void main() {
     }
 
     expect(barBox.size.width, moreOrLessEquals(366, epsilon: 1));
+  });
+
+  testWidgets('home scroll viewport reaches screen bottom; last content clears tab bar at scroll end',
+      (WidgetTester tester) async {
+    final window = tester.binding.window;
+    window.physicalSizeTestValue = const Size(390, 844);
+    window.devicePixelRatioTestValue = 1.0;
+    addTearDown(window.clearPhysicalSizeTestValue);
+    addTearDown(window.clearDevicePixelRatioTestValue);
+
+    final stats = StatsService();
+    final player = PlayerService(stats: stats);
+    await tester.pumpWidget(Root(
+        notifier: ThemeNotifier(),
+        player: player,
+        favorites: FavoritesService(),
+        checkin: CheckinService(),
+        customScenes: CustomSceneService(),
+        stats: stats,
+        achievement: AchievementService(
+          player: player,
+          checkin: CheckinService(),
+          customScenes: CustomSceneService(),
+          stats: stats,
+          themeNotifier: ThemeNotifier(),
+        )));
+    await tester.pumpAndSettle();
+
+    // 回归核心 1：首页滚动视口必须通到屏幕最底（内容能从悬浮 TabBar 下方穿过）。
+    // 此前的错误实现把让位 padding 挂在滚动视口外层，视口在 TabBar 上方被裁短。
+    final homeScroll = find
+        .descendant(of: find.byType(IndexPage), matching: find.byType(SingleChildScrollView))
+        .first;
+    final RenderBox viewportBox = tester.renderObject(homeScroll) as RenderBox;
+    final double viewportBottom =
+        viewportBox.localToGlobal(Offset(0, viewportBox.size.height)).dy;
+    expect(viewportBottom, moreOrLessEquals(844, epsilon: 0.5),
+        reason: '滚动视口应通到屏幕底，内容才可从悬浮胶囊下穿过');
+
+    // 回归核心 2：滚到底后，最后一条内容底边必须高于 TabBar 顶边（不被遮挡）。
+    final ScrollPosition pos = tester
+        .state<ScrollableState>(
+            find.descendant(of: find.byType(IndexPage), matching: find.byType(Scrollable)).first)
+        .position;
+    pos.jumpTo(pos.maxScrollExtent);
+    await tester.pumpAndSettle();
+
+    final RenderBox barBox = tester.renderObject(find.byType(AppTabBar)) as RenderBox;
+    final double barTop = barBox.localToGlobal(Offset.zero).dy;
+    final column = find
+        .descendant(of: homeScroll, matching: find.byType(Column))
+        .first;
+    final RenderBox colBox = tester.renderObject(column) as RenderBox;
+    final double contentBottom =
+        colBox.localToGlobal(Offset(0, colBox.size.height)).dy;
+    expect(contentBottom, lessThan(barTop),
+        reason: '滚到底时最后一条内容应完整越过悬浮 TabBar 顶边');
   });
 }

@@ -9,9 +9,12 @@ import '../utils/style_utils.dart';
 /// 页面容器：顶部安全区 + 顶部柔和渐变（`.page-bg`，高度 440rpx）+
 /// 轻微上浮/淡入进入动效（尊重系统「减弱动态效果」）。
 ///
-/// [bottomBarSpace]：true 时预留「悬浮 TabBar +（有播放时叠加）PlayBar」高度，
-/// 对应原型 `.page-container` 底部 padding。PlayBar 高度只在真正有播放内容时
-/// 才预留，避免未播放时滚动到底留出整条空白。
+/// [bottomBarSpace]：true（4 个 tab 页，悬浮 TabBar / PlayBar 叠在其上）时，
+/// **外层底部内边距为 0**——滚动视口通到屏幕最底，内容全程从悬浮组件下方
+/// 滑过，保持「悬浮叠层」效果；「最后一条内容不被遮挡」由滚动内容**尾部内衬**
+/// 实现：页面根级滚动组件用 [AppPage.reservedBottomInset] 作内部 padding
+/// （对应原型 `.page-container` 把 padding-bottom 挂在滚动内容上的做法）。
+/// false（路由推入页，上方无悬浮组件）时保留固定 28 底部内边距。
 class AppPage extends StatefulWidget {
   final Widget child;
   final bool bottomBarSpace;
@@ -19,6 +22,22 @@ class AppPage extends StatefulWidget {
   /// 覆盖默认内边距（默认 LTRB(20,12,20,bottom)）。
   /// 需要内容通栏（如场景详情 Hero）时传 EdgeInsets.zero 自行控制。
   final EdgeInsetsGeometry? padding;
+
+  /// 滚动内容尾部应预留的让位高度：悬浮 TabBar（未播放）或
+  /// TabBar + PlayBar（播放中）。锚点几何见 shell.dart：
+  /// TabBar bottom = safeBottom*0.4 + 6，PlayBar bottom = safeBottom + kTabHeight + 8。
+  ///
+  /// 铁律：只能加在**滚动内容内部**（根级 SingleChildScrollView 的 `padding`），
+  /// 不得加在本容器外层——外层 padding 会裁短滚动视口，内容在悬浮组件上方
+  /// 被硬裁掉，永远进不了悬浮组件下方，悬浮叠层效果即失效。
+  static double reservedBottomInset(BuildContext context) {
+    final bool showPlayBar = context.select<PlayerService, bool>(
+        (PlayerService p) => p.currentScene != null);
+    final double safeBottom = MediaQuery.of(context).padding.bottom;
+    return showPlayBar
+        ? safeBottom + kTabHeight + kPlayBarHeight + 20.0
+        : safeBottom * 0.4 + kTabHeight + 16.0;
+  }
 
   const AppPage({
     required this.child,
@@ -72,18 +91,10 @@ class _AppPageState extends State<AppPage> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).appColors;
-    // PlayBar 只在有播放内容时才浮起：data 驱动，跟随播放状态即时收放底部空间。
-    final bool showPlayBar = context.select<PlayerService, bool>(
-      (PlayerService p) => p.currentScene != null,
-    );
     final slide = Tween<Offset>(
       begin: const Offset(0, 0.02),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-    // 内容可滚到屏幕最底：未播放时底部不留间距；仅在有悬浮播放条时为其让位。
-    final double bottomPad = widget.bottomBarSpace
-        ? (showPlayBar ? kTabHeight + kPlayBarHeight + 28.0 : 0.0)
-        : 28.0;
     return Stack(
       children: [
         Positioned(
@@ -112,8 +123,11 @@ class _AppPageState extends State<AppPage> with SingleTickerProviderStateMixin {
             child: SlideTransition(
               position: slide,
               child: Padding(
+                // bottomBarSpace 页外层 bottom 归零：滚动视口通到屏幕最底，
+                // 内容得以从悬浮 TabBar / PlayBar 下方滑过（悬浮叠层）。
                 padding: widget.padding ??
-                    EdgeInsets.fromLTRB(rx(40), rx(24), rx(40), bottomPad),
+                    EdgeInsets.fromLTRB(rx(40), rx(24), rx(40),
+                        widget.bottomBarSpace ? 0.0 : 28.0),
                 child: widget.child,
               ),
             ),

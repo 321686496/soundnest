@@ -208,16 +208,21 @@ class _SceneEditPageState extends State<SceneEditPage> {
           AppIcon(name: 'edit', size: 20, color: c.primary),
           const SizedBox(width: 9),
           Expanded(
-            child: TextField(
-              controller: _nameCtrl,
-              maxLength: 20,
-              style: TextStyle(fontSize: 14, color: c.text),
-              cursorColor: c.primary,
-              decoration: InputDecoration(
-                hintText: '给场景取个名字，如「雨天阅读」',
-                hintStyle: TextStyle(fontSize: 14, color: c.text3),
-                counterText: '',
-                border: InputBorder.none,
+            // TextField 需要 Material 祖先；此页为纯自定义容器（无 Scaffold 内 Material），
+            // 用透明 Material 承载水波纹/光标绘制，避免 "No Material widget found" 崩溃。
+            child: Material(
+              type: MaterialType.transparency,
+              child: TextField(
+                controller: _nameCtrl,
+                maxLength: 20,
+                style: TextStyle(fontSize: 14, color: c.text),
+                cursorColor: c.primary,
+                decoration: InputDecoration(
+                  hintText: '给场景取个名字，如「雨天阅读」',
+                  hintStyle: TextStyle(fontSize: 14, color: c.text3),
+                  counterText: '',
+                  border: InputBorder.none,
+                ),
               ),
             ),
           ),
@@ -326,7 +331,6 @@ class _SceneEditPageState extends State<SceneEditPage> {
         const SizedBox(height: 13),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

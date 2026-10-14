@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' show FontFeature;
 
 import 'package:flutter/material.dart';
@@ -129,19 +130,23 @@ class _PlayerPageState extends State<PlayerPage> {
 
   Widget _buildMeta(BuildContext context, Scene scene) {
     final c = Theme.of(context).appColors;
-    // 只订阅音轨列表；其余通知不重建元信息区。
+    // 只订阅音轨列表与播放态；其余通知不重建元信息区。
     final tracks = context.select<PlayerService, List<PlayerTrack>>(
         (PlayerService p) => p.tracks);
+    final isPlaying = context.select<PlayerService, bool>(
+        (PlayerService p) => p.isPlaying);
     final names = tracks.map((PlayerTrack t) => t.name).join(' + ');
     return Column(
       children: [
+        _Equalizer(playing: isPlaying),
+        const SizedBox(height: 10),
         Text(
           scene.name,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: rx(42),
+            fontSize: rx(50),
             fontWeight: FontWeight.w700,
-            letterSpacing: -0.25,
+            letterSpacing: -0.3,
             height: 1.2,
             color: c.text,
           ),
@@ -239,10 +244,20 @@ class _PlayerPageState extends State<PlayerPage> {
                 boxShadow: c.shadow3,
               ),
               alignment: Alignment.center,
-              child: AppIcon(
-                  name: isPlaying ? 'pause' : 'play',
-                  size: 44,
-                  color: c.onPrimary),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 240),
+                switchInCurve: Curves.easeOutBack,
+                switchOutCurve: Curves.easeOut,
+                transitionBuilder: (Widget child, Animation<double> a) =>
+                    ScaleTransition(
+                        scale: a,
+                        child: FadeTransition(opacity: a, child: child)),
+                child: AppIcon(
+                    key: ValueKey<bool>(isPlaying),
+                    name: isPlaying ? 'pause' : 'play',
+                    size: 44,
+                    color: c.onPrimary),
+              ),
             ),
           ),
           _CtlButton(
@@ -432,8 +447,8 @@ class _PlayerPageState extends State<PlayerPage> {
 
 /// 进度区（模拟推进条 + 时间标签）。
 ///
-/// 由本区块自行持有每秒推进的 Timer，局部 setState。这样整页在常态播放时
-/// 不需要每秒重建，仅此区块刷新，缓解整页卡顿。
+/// 由本区块自行持有 100ms 步进的 Timer，局部 setState：进度条连续流动
+/// 而非每秒跳格，仅此区块刷新，整页在常态播放时不需要重建。
 class _ProgressSection extends StatefulWidget {
   const _ProgressSection();
 
@@ -446,7 +461,8 @@ class _ProgressSection extends StatefulWidget {
 
 class _ProgressSectionState extends State<_ProgressSection> {
   Timer? _tick;
-  int curSec = 0;
+  // 模拟秒（double），100ms 步进让进度平滑流动。
+  double curSec = 0;
   double? _dragPct;
 
   @override
@@ -464,10 +480,12 @@ class _ProgressSectionState extends State<_ProgressSection> {
   void _ensureTick() {
     final playing = context.read<PlayerService>().isPlaying;
     if (playing && _tick == null) {
-      _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      _tick = Timer.periodic(const Duration(milliseconds: 100), (_) {
         if (!mounted) return;
         if (!context.read<PlayerService>().isPlaying) return;
-        setState(() => curSec = (curSec + 1) % _ProgressSection.totalSec);
+        setState(() {
+          curSec = (curSec + 0.1) % _ProgressSection.totalSec;
+        });
       });
     } else if (!playing && _tick != null) {
       _tick!.cancel();
@@ -494,12 +512,13 @@ class _ProgressSectionState extends State<_ProgressSection> {
 
   void _seekEnd() {
     if (_dragPct == null) return;
-    curSec = (_dragPct! * _ProgressSection.totalSec).round();
+    curSec = _dragPct! * _ProgressSection.totalSec;
     _dragPct = null;
     setState(() {});
   }
 
-  static String _fmt(int s) {
+  static String _fmt(num sec) {
+    final s = sec.floor();
     final m = s ~/ 60;
     final ss = s % 60;
     return '$m:${ss.toString().padLeft(2, '0')}';
@@ -587,6 +606,95 @@ class _ProgressSectionState extends State<_ProgressSection> {
         },
       ),
     );
+  }
+}
+
+/// 声波均衡器：播放时五根律动条缓缓起伏，暂停时平滑回落到静息相位。
+/// 单控制器 + 整数倍率：sin(2πk·1)=sin(0)，repeat 循环首尾相位无缝衔接。
+class _Equalizer extends StatefulWidget {
+  final bool playing;
+  const _Equalizer({required this.playing});
+
+  @override
+  State<_Equalizer> createState() => _EqualizerState();
+}
+
+class _EqualizerState extends State<_Equalizer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2200),
+  );
+
+  /// 各条倍率（整数保证循环无缝；对称排布让律动更自然）。
+  static const List<int> _rates = <int>[1, 2, 3, 2, 1];
+
+  @override
+  void initState() {
+    super.initState();
+    _sync(widget.playing, animate: false);
+  }
+
+  @override
+  void didUpdateWidget(_Equalizer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.playing != widget.playing) _sync(widget.playing);
+  }
+
+  void _sync(bool playing, {bool animate = true}) {
+    if (playing) {
+      _ctrl.repeat();
+    } else if (_ctrl.isAnimating) {
+      _ctrl.stop();
+      // 暂停不突停：平滑回落到波谷相位（各条等高的静息态）。
+      if (animate) {
+        _ctrl.animateTo(0,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOut);
+      } else {
+        _ctrl.value = 0;
+      }
+    }
+  }
+
+  double _barHeight(int i) {
+    final f = (math.sin(2 * math.pi * _rates[i] * _ctrl.value) + 1) / 2;
+    return 4 + 10 * f;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).appColors;
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (BuildContext context, _) {
+        return RepaintBoundary(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              for (var i = 0; i < _rates.length; i++) ...[
+                if (i > 0) const SizedBox(width: 3),
+                Container(
+                  width: 3.5,
+                  height: _barHeight(i),
+                  decoration: BoxDecoration(
+                    color: c.primary,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
   }
 }
 
@@ -696,6 +804,10 @@ class _BreathingCoverState extends State<_BreathingCover>
     duration: const Duration(milliseconds: 3200),
   );
 
+  /// 呼吸用 easeInOut 缓动：线性往复太机械，缓入缓出才像「呼吸」。
+  late final Animation<double> _breath =
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+
   @override
   void initState() {
     super.initState();
@@ -711,9 +823,12 @@ class _BreathingCoverState extends State<_BreathingCover>
   void _update(bool playing) {
     if (playing) {
       _ctrl.repeat(reverse: true);
-    } else {
+    } else if (_ctrl.isAnimating) {
+      // 暂停不突缩：从当前相位平滑回落到 1.0。
       _ctrl.stop();
-      _ctrl.value = 0;
+      _ctrl.animateTo(0,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOut);
     }
   }
 
@@ -730,7 +845,7 @@ class _BreathingCoverState extends State<_BreathingCover>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (BuildContext context, _) {
-        final scale = widget.playing ? 1.0 + 0.035 * _ctrl.value : 1.0;
+        final scale = 1.0 + 0.035 * _breath.value;
         return Transform.scale(
           scale: scale,
           child: Container(
