@@ -82,7 +82,9 @@ class PlayerService extends ChangeNotifier {
   Scene? currentScene;
 
   /// 展示用场景：无当前场景但有音轨（如单曲试听）时，由首轨声音合成一个
-  /// 仅用于展示的 Scene（不入库、不写最近/统计，id 前缀 sound- 不会命中 findScene）。
+  /// 仅用于展示的 Scene（不入库、不写最近/统计）。id 前缀 sound- 不与任何
+  /// 真实场景 id 冲突（已核验）；但 [findScene] 对未知 id 仍非空回退
+  /// homeScenes 首条，下游不得经 [findScene] 解析该展示 id。
   Scene? get displayScene {
     final Scene? current = currentScene;
     if (current != null) return current;
