@@ -1,7 +1,7 @@
 # AGENT.md — 声栖（白噪音混音助眠应用）
 
 > 项目根目录智能体指令文件
-> 最后更新：2026-10-12
+> 最后更新：2026-10-13
 
 ---
 
@@ -222,6 +222,7 @@ snapp/lib/
 - **音频素材（2026-10-12 更新）**：已落地 20 条 Mixkit 真实采录音（补齐 13 条缺失音 + 升级 7 条伪自然音，Mixkit License 可商用免署名），逐条登记见 `docs/audio-assets-license.md`；`seed_data.dart` 资产集合拆分为 `generatedAudioIds`（纯合成）+ `recordedAudioIds`（真实录音）。缺口：`nightingale`（夜莺）与蓝/紫/灰噪音（按调研保留算法合成路线）仍走静音模拟。
 - **OHOS 媒体播控（2026-09-19 已实现，待真机验证）**：通知栏播放条（AVSession 应用级唯一会话）与桌面音乐卡片（Form Kit：`EntryFormAbility` + 2x2/2x4 卡片，播控走 `postCardAction call` → `EntryAbility.callee`）已随 HAP 构建落地；需真机验证通知栏元数据/播控按钮、卡片添加与状态刷新、冷启动卡片播控恢复。
 - **integration_test 跨盘约束**：SDK 在 D 盘而项目在 E 盘时，`flutter build hap` 会把 SDK 内 `integration_test/ohos`（D 盘）注入 `ohos/oh-package.json5` overrides，触发 ohpm `00618008 Cross Driver Error`。已 vendor 到仓库根 `vendor/integration_test` 并在 `snapp/pubspec.yaml` `dependency_overrides` 指向同盘 path 解决；**Harmony SDK 升级后须同步更新 vendor 拷贝**。
+- **声音详情页（2026-10-13 新增）**：Flutter 侧新增页面（无原型对应页），路由 `/sound/:soundId`；入口为音疗库声音卡片与场景详情页声音配方条目。`PlayerService` 新增 `playSound`（单曲试听）/ `addTrack`（追加混音）/ `displayScene`（试听态展示回退），混音上限常量 `maxMixTracks = 6`；PlayBar 可见性改为按「有音轨」判定。
 
 ---
 
